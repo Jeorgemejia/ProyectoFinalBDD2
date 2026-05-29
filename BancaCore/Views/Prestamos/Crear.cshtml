@@ -1,0 +1,71 @@
+@* Prestamos/Crear.cshtml *@
+@model BancaCore.Models.Prestamo
+@{ ViewData["Title"] = "Nuevo Préstamo"; }
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h5 class="page-title mb-0"><i class="bi bi-cash-coin me-2"></i>Registrar Préstamo</h5>
+    <a asp-action="Index" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>Volver</a>
+</div>
+
+<div class="card" style="max-width:680px">
+    <div class="card-body p-4">
+        <form asp-action="Crear" method="post">
+            @Html.AntiForgeryToken()
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Cliente</label>
+                    <select asp-for="CodigoCliente" asp-items="ViewBag.Clientes" class="form-select">
+                        <option value="">-- Seleccione --</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Sucursal</label>
+                    <select asp-for="CodigoSucursal" asp-items="ViewBag.Sucursales" class="form-select">
+                        <option value="">-- Sucursal --</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Tipo de Préstamo</label>
+                    <select asp-for="CodigoTipoPrestamo" asp-items="ViewBag.Tipos" class="form-select">
+                        <option value="">-- Tipo --</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Moneda</label>
+                    <select asp-for="CodigoMoneda" asp-items="ViewBag.Monedas" class="form-select">
+                        <option value="">-- Moneda --</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="MontoSolicitado" class="form-label fw-semibold"></label>
+                    <div class="input-group">
+                        <span class="input-group-text">Q</span>
+                        <input asp-for="MontoSolicitado" type="number" step="0.01" min="1" class="form-control" placeholder="0.00"/>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="TasaInteres" class="form-label fw-semibold"></label>
+                    <div class="input-group">
+                        <input asp-for="TasaInteres" type="number" step="0.01" min="0" class="form-control"/>
+                        <span class="input-group-text">%</span>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="PlazoMeses" class="form-label fw-semibold"></label>
+                    <div class="input-group">
+                        <input asp-for="PlazoMeses" type="number" min="1" class="form-control"/>
+                        <span class="input-group-text">meses</span>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="FechaDesembolso" class="form-label fw-semibold"></label>
+                    <input asp-for="FechaDesembolso" type="date" class="form-control"/>
+                </div>
+            </div>
+            <div class="mt-4 d-flex gap-2">
+                <button type="submit" class="btn btn-banca"><i class="bi bi-check-lg me-1"></i>Registrar Préstamo</button>
+                <a asp-action="Index" class="btn btn-outline-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>

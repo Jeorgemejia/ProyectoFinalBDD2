@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewData["Title"] — Sistema Bancario</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"/>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet"/>
+    <style>
+        :root {
+            --azul:     #0d2b6e;
+            --azul-med: #1a4494;
+            --oro:      #c9a84c;
+            --sidebar-w: 240px;
+        }
+        body { background:#f0f4f9; font-size:.9rem; }
+
+        /* ---- Sidebar ---- */
+        #sidebar {
+            width: var(--sidebar-w); height:100vh; position:fixed; top:0; left:0; z-index:100;
+            background: linear-gradient(180deg, var(--azul) 0%, var(--azul-med) 100%);
+            display:flex; flex-direction:column;
+            overflow-y: auto; /* allow wheel scrolling on entire sidebar */
+            -webkit-overflow-scrolling: touch;
+        }
+        #sidebar .brand {
+            padding:1.2rem 1rem; border-bottom:1px solid rgba(255,255,255,.1);
+            color:#fff; font-weight:700; font-size:1.1rem; display:flex; align-items:center; gap:.5rem;
+        }
+        #sidebar .brand span { color: var(--oro); }
+        #sidebar .nav-section {
+            padding:.5rem 1rem .2rem; font-size:.65rem; text-transform:uppercase;
+            letter-spacing:.1em; color:rgba(255,255,255,.4); margin-top:.5rem;
+        }
+        #sidebar .nav-body {
+            flex: 1 1 auto; /* take remaining space between brand and bottom-info */
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            padding-right: 0.5rem; /* space for scrollbar */
+        }
+
+        /* ensure mouse wheel scroll works when pointer is over sidebar */
+        #sidebar, #sidebar .nav-body { -webkit-overflow-scrolling: touch; }
+        #sidebar .nav-link {
+            color:rgba(255,255,255,.75); border-radius:8px; margin:.1rem .5rem;
+            padding:.45rem .75rem; display:flex; align-items:center; gap:.6rem; font-size:.85rem;
+            transition:background .15s;
+        }
+        #sidebar .nav-link:hover, #sidebar .nav-link.active {
+            background:rgba(255,255,255,.12); color:#fff;
+        }
+        #sidebar .nav-link i { font-size:1rem; width:18px; text-align:center; }
+        #sidebar .bottom-info {
+            margin-top:auto; padding:1rem; border-top:1px solid rgba(255,255,255,.1);
+            color:rgba(255,255,255,.6); font-size:.75rem;
+        }
+
+        /* ---- Top bar ---- */
+        #topbar {
+            margin-left: var(--sidebar-w); background:#fff; border-bottom:1px solid #dde3ee;
+            padding:.5rem 1.5rem; display:flex; align-items:center; justify-content:space-between;
+            position:sticky; top:0; z-index:90;
+        }
+
+        /* ---- Content ---- */
+        #content { margin-left: var(--sidebar-w); padding:1.5rem 2rem; }
+
+        /* ---- Cards ---- */
+        .card { border:none; border-radius:12px; box-shadow:0 2px 10px rgba(13,43,110,.08); }
+        .stat-card { border-left:4px solid; }
+        .stat-card.blue  { border-left-color:var(--azul); }
+        .stat-card.green { border-left-color:#22c55e; }
+        .stat-card.gold  { border-left-color:var(--oro); }
+        .stat-card.red   { border-left-color:#ef4444; }
+
+        /* ---- Tables ---- */
+        .table th { background:#f8f9fc; font-size:.78rem; text-transform:uppercase; letter-spacing:.04em; color:#6b7280; }
+        .table td { vertical-align:middle; }
+
+        /* ---- Badges ---- */
+        .badge-dep  { background:#dcfce7; color:#15803d; }
+        .badge-ret  { background:#fee2e2; color:#b91c1c; }
+        .badge-tra  { background:#dbeafe; color:#1d4ed8; }
+        .badge-pag  { background:#fef9c3; color:#854d0e; }
+        .badge-ind  { background:#e0e7ff; color:#3730a3; }
+        .badge-emp  { background:#fef3c7; color:#92400e; }
+
+        /* ---- Page header ---- */
+        .page-title { font-size:1.2rem; font-weight:700; color:var(--azul); }
+
+        /* ---- Pill buttons ---- */
+        .btn-banca { background:var(--azul); color:#fff; border-radius:8px; }
+        .btn-banca:hover { background:var(--azul-med); color:#fff; }
+    </style>
+</head>
+<body>
+
+@if (User.Identity?.IsAuthenticated == true)
+{
+    <!-- SIDEBAR -->
+    <nav id="sidebar">
+        <div class="brand">
+            <i class="bi bi-bank2"></i>
+            System<span>BancGT</span>
+        </div>
+
+        <div class="nav-section">Principal</div>
+        <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString()=="Home"?"active":"")"
+           asp-controller="Home" asp-action="Index">
+            <i class="bi bi-speedometer2"></i> Dashboard
+        </a>
+
+        <div class="nav-section">Clientes y Cuentas</div>
+        <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString()=="Clientes"?"active":"")"
+           asp-controller="Clientes" asp-action="Index">
+            <i class="bi bi-people"></i> Clientes
+        </a>
+        <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString()=="Cuentas"?"active":"")"
+           asp-controller="Cuentas" asp-action="Index">
+            <i class="bi bi-credit-card-2-front"></i> Cuentas
+        </a>
+        <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString()=="Prestamos"?"active":"")"
+           asp-controller="Prestamos" asp-action="Index">
+            <i class="bi bi-cash-coin"></i> Préstamos
+        </a>
+
+        <div class="nav-section">Operaciones</div>
+        <a class="nav-link" asp-controller="Transacciones" asp-action="Deposito">
+            <i class="bi bi-arrow-down-circle text-success"></i> Depósito
+        </a>
+        <a class="nav-link" asp-controller="Transacciones" asp-action="Retiro">
+            <i class="bi bi-arrow-up-circle text-danger"></i> Retiro
+        </a>
+        <a class="nav-link" asp-controller="Transacciones" asp-action="Transferencia">
+            <i class="bi bi-arrow-left-right" style="color:var(--oro)"></i> Transferencia
+        </a>
+        <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString()=="Transacciones"&&ViewContext.RouteData.Values["action"]?.ToString()=="Index"?"active":"")"
+           asp-controller="Transacciones" asp-action="Index">
+            <i class="bi bi-list-columns-reverse"></i> Historial
+        </a>
+
+        @using System.Security.Claims
+        @if (User.IsInRole("ADMIN") || User.Identity?.Name == "admin")
+        {
+            <div class="nav-section">Administración</div>
+            <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString()=="Sucursales"?"active":"")"
+               asp-controller="Sucursales" asp-action="Index">
+                <i class="bi bi-building"></i> Sucursales
+            </a>
+            <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString()=="Monedas"?"active":"")"
+               asp-controller="Monedas" asp-action="Index">
+                <i class="bi bi-currency-exchange"></i> Monedas
+            </a>
+            <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString()=="TiposCuenta"?"active":"")"
+               asp-controller="TiposCuenta" asp-action="Index">
+                <i class="bi bi-list-nested"></i> Tipos de cuenta
+            </a>
+            <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString()=="TiposTransaccion"?"active":"")"
+               asp-controller="TiposTransaccion" asp-action="Index">
+                <i class="bi bi-receipt"></i> Tipos transacción
+            </a>
+            <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString()=="TiposPrestamo"?"active":"")"
+               asp-controller="TiposPrestamo" asp-action="Index">
+                <i class="bi bi-bank"></i> Tipos préstamo
+            </a>
+            <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString()=="TiposTarjeta"?"active":"")"
+               asp-controller="TiposTarjeta" asp-action="Index">
+                <i class="bi bi-card-list"></i> Tipos tarjetas
+            </a>
+            <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString()=="Tarjetas"?"active":"")"
+               asp-controller="Tarjetas" asp-action="Index">
+                <i class="bi bi-credit-card"></i> Tarjetas
+            </a>
+            <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString()=="Usuarios"?"active":"")"
+               asp-controller="Usuarios" asp-action="Index">
+                <i class="bi bi-people"></i> Usuarios
+            </a>
+            <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString()=="PagosPrestamo"?"active":"")"
+               asp-controller="PagosPrestamo" asp-action="Index">
+                <i class="bi bi-cash-stack"></i> Pagos préstamos
+            </a>
+            <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString()=="Auditoria"?"active":"")"
+               asp-controller="Auditoria" asp-action="Index">
+                <i class="bi bi-journal-text"></i> Auditoría
+            </a>
+        }
+
+        <div class="bottom-info">
+            <div><i class="bi bi-person-circle me-1"></i>@User.Identity?.Name</div>
+            <div class="text-warning-emphasis small">@User.FindFirst("NombreSucursal")?.Value</div>
+        </div>
+    </nav>
+
+    <!-- TOP BAR -->
+    <div id="topbar">
+        <span class="text-muted small">
+            <i class="bi bi-calendar3 me-1"></i>@DateTime.Now.ToString("dddd dd, MMMM yyyy")
+        </span>
+        <div class="d-flex align-items-center gap-3">
+            <span class="badge bg-secondary">@User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value</span>
+            <a asp-controller="Auth" asp-action="Logout" class="btn btn-sm btn-outline-danger">
+                <i class="bi bi-box-arrow-right"></i> Salir
+            </a>
+        </div>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <main id="content">
+        @if (TempData["OK"] != null)
+        {
+            <div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
+                <i class="bi bi-check-circle-fill me-2"></i>@TempData["OK"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        }
+        @if (TempData["ERR"] != null)
+        {
+            <div class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
+                <i class="bi bi-exclamation-circle-fill me-2"></i>@TempData["ERR"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        }
+        @RenderBody()
+    </main>
+}
+else
+{
+    @RenderBody()
+}
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+@await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

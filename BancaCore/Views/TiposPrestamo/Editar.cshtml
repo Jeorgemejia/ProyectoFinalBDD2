@@ -1,0 +1,13 @@
+@model BancaCore.Models.TipoPrestamo
+@{ ViewData["Title"] = "Editar Tipo de Préstamo"; }
+
+<div class="card" style="max-width:700px">
+ <div class="card-body p-4">
+  <form asp-action="Editar" method="post">@Html.AntiForgeryToken()<input type="hidden" asp-for="CodigoTipoPrestamo" />
+    <div class="mb-3"><label asp-for="Nombre" class="form-label"></label><input asp-for="Nombre" class="form-control"/></div>
+    <div class="row g-3"><div class="col-md-6"><label asp-for="TasaInteres" class="form-label"></label><input asp-for="TasaInteres" class="form-control"/></div>
+    <div class="col-md-6"><label asp-for="PlazoMaximoMeses" class="form-label"></label><input asp-for="PlazoMaximoMeses" class="form-control"/></div></div>
+    <div class="mt-3"><button class="btn btn-banca">Guardar</button> <a asp-action="Index" class="btn btn-outline-secondary">Cancelar</a></div>
+  </form>
+ </div>
+</div>

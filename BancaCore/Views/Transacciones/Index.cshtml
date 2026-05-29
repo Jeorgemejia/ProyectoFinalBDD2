@@ -1,0 +1,43 @@
+@model IEnumerable<BancaCore.Models.Transaccion>
+@{ ViewData["Title"] = "Historial de Transacciones"; }
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h5 class="page-title mb-0"><i class="bi bi-list-columns-reverse me-2"></i>Historial de Transacciones</h5>
+    <div class="d-flex gap-2">
+        <a asp-action="Deposito"       class="btn btn-sm btn-success"><i class="bi bi-arrow-down-circle me-1"></i>Depósito</a>
+        <a asp-action="Retiro"         class="btn btn-sm btn-danger"><i class="bi bi-arrow-up-circle me-1"></i>Retiro</a>
+        <a asp-action="Transferencia"  class="btn btn-sm btn-primary"><i class="bi bi-arrow-left-right me-1"></i>Transferencia</a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        <table class="table table-hover mb-0">
+            <thead><tr>
+                <th>#</th><th>Tipo</th><th>Cuenta Origen</th><th>Cuenta Destino</th>
+                <th>Cliente</th><th class="text-end">Monto</th><th>Descripción</th><th>Fecha y Hora</th>
+            </tr></thead>
+            <tbody>
+            @foreach (var t in Model)
+            {
+                var badge = t.NombreTipoTransaccion switch {
+                    "Depósito"      => "badge-dep",
+                    "Retiro"        => "badge-ret",
+                    "Transferencia" => "badge-tra",
+                    _               => "badge-pag"
+                };
+                <tr>
+                    <td class="text-muted small">#@t.CodigoTransaccion</td>
+                    <td><span class="badge @badge px-2 py-1">@t.NombreTipoTransaccion</span></td>
+                    <td class="font-monospace small">@(string.IsNullOrEmpty(t.NumeroCuentaOrigen) ? "—" : t.NumeroCuentaOrigen)</td>
+                    <td class="font-monospace small text-muted">@(string.IsNullOrEmpty(t.NumeroCuentaDestino) ? "—" : t.NumeroCuentaDestino)</td>
+                    <td class="small">@t.NombreCliente</td>
+                    <td class="text-end fw-bold">@t.SimboloMoneda @t.Monto.ToString("N2")</td>
+                    <td class="small text-muted">@t.Descripcion</td>
+                    <td class="small text-muted">@t.FechaHora.ToString("dd/MM/yy HH:mm")</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>

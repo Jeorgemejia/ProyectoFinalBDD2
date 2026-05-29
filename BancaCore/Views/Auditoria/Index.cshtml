@@ -1,0 +1,25 @@
+@model IEnumerable<BancaCore.Models.Auditoria>
+@{ ViewData["Title"] = "Auditoría"; }
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h5 class="page-title mb-0">Auditoría</h5>
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        <table class="table table-hover mb-0">
+            <thead><tr><th>Fecha</th><th>Usuario</th><th>Tabla</th><th>Acción</th><th>Registro</th></tr></thead>
+            <tbody>
+            @foreach(var a in Model){
+                <tr>
+                    <td>@a.FechaHora.ToString("dd/MM/yyyy HH:mm")</td>
+                    <td>@a.Usuario</td>
+                    <td>@a.TablaAfectada</td>
+                    <td>@a.Accion</td>
+                    <td>@a.RegistroId</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>

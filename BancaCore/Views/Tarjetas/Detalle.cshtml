@@ -1,0 +1,18 @@
+@model BancaCore.Models.Tarjeta
+@{ ViewData["Title"] = "Detalle Tarjeta"; }
+
+<div class="card" style="max-width:760px">
+ <div class="card-body p-4">
+  <dl class="row">
+    <dt class="col-sm-3">Número</dt><dd class="col-sm-9 font-monospace">@Model.NumeroTarjeta</dd>
+    <dt class="col-sm-3">Cuenta</dt><dd class="col-sm-9">@Model.NumeroCuenta</dd>
+    <dt class="col-sm-3">Tipo</dt><dd class="col-sm-9">@Model.NombreTipoTarjeta</dd>
+    <dt class="col-sm-3">Límite</dt><dd class="col-sm-9">@Model.LimiteCredito</dd>
+    <dt class="col-sm-3">Saldo utilizado</dt><dd class="col-sm-9">@Model.SaldoUtilizado</dd>
+    <dt class="col-sm-3">Emisión</dt><dd class="col-sm-9">@Model.FechaEmision.ToString("dd/MM/yyyy")</dd>
+    <dt class="col-sm-3">Vencimiento</dt><dd class="col-sm-9">@Model.FechaVencimiento.ToString("dd/MM/yyyy")</dd>
+  </dl>
+  <a asp-action="Editar" asp-route-id="@Model.CodigoTarjeta" class="btn btn-sm btn-outline-secondary">Editar</a>
+  <a asp-action="Index" class="btn btn-sm btn-outline-secondary">Volver</a>
+ </div>
+</div>

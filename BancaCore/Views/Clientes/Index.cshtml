@@ -1,0 +1,70 @@
+@* Views/Clientes/Index.cshtml *@
+@model IEnumerable<Cliente>
+@{ ViewData["Title"] = "Clientes"; }
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h5 class="page-title mb-0"><i class="bi bi-people me-2"></i>Clientes</h5>
+    <a asp-action="Crear" class="btn btn-banca btn-sm"><i class="bi bi-person-plus me-1"></i>Nuevo Cliente</a>
+</div>
+
+<div class="card">
+    <div class="p-3 border-bottom d-flex gap-2">
+        <input id="buscar" type="text" class="form-control form-control-sm" style="max-width:280px" placeholder="Buscar por nombre, DPI, NIT..."/>
+        <select id="filtroTipo" class="form-select form-select-sm" style="max-width:160px">
+            <option value="">Todos los tipos</option>
+            <option>INDIVIDUAL</option>
+            <option>EMPRESARIAL</option>
+        </select>
+        <button id="btnMostrarTodos" type="button" class="btn btn-outline-secondary btn-sm">Mostrar todos</button>
+    </div>
+    <div class="card-body p-0">
+        <table class="table table-hover mb-0" id="tbl">
+            <thead><tr>
+                <th>DPI / NIT</th><th>Cliente</th><th>Tipo</th><th>Teléfono</th><th>Email</th><th>Registro</th><th>Acciones</th>
+            </tr></thead>
+            <tbody>
+            @foreach (var c in Model)
+            {
+                <tr>
+                    <td class="font-monospace small">@(c.DPI ?? c.NIT ?? "—")</td>
+                    <td>
+                        <div class="fw-semibold">@c.NombreCompleto</div>
+                        <small class="text-muted">@c.Direccion</small>
+                    </td>
+                    <td>
+                        <span class="badge @(c.TipoCliente=="INDIVIDUAL"?"badge-ind":"badge-emp")">@c.TipoCliente</span>
+                    </td>
+                    <td class="small">@c.Telefono</td>
+                    <td class="small text-muted">@c.Email</td>
+                    <td class="small text-muted">@c.FechaCreacion?.ToString("dd/MM/yyyy")</td>
+                    <td>
+                        <a asp-action="Detalle" asp-route-id="@c.IdCliente" class="btn btn-sm btn-outline-primary me-1" title="Detalle"><i class="bi bi-eye"></i></a>
+                        <a asp-action="Editar"  asp-route-id="@c.IdCliente" class="btn btn-sm btn-outline-secondary me-1" title="Editar"><i class="bi bi-pencil"></i></a>
+                        <a asp-action="ConfirmarEliminar" asp-route-id="@c.IdCliente" class="btn btn-sm btn-outline-danger" title="Desactivar"><i class="bi bi-person-x"></i></a>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+function filtrar(){
+    const q = document.getElementById('buscar').value.toLowerCase();
+    const t = document.getElementById('filtroTipo').value.toLowerCase();
+    document.querySelectorAll('#tbl tbody tr').forEach(r=>{
+        const txt = r.textContent.toLowerCase();
+        r.style.display = txt.includes(q) && txt.includes(t) ? '' : 'none';
+    });
+}
+document.getElementById('buscar').addEventListener('keyup', filtrar);
+document.getElementById('filtroTipo').addEventListener('change', filtrar);
+document.getElementById('btnMostrarTodos').addEventListener('click', ()=>{
+    document.getElementById('buscar').value = '';
+    document.getElementById('filtroTipo').value = '';
+    filtrar();
+});
+</script>
+}

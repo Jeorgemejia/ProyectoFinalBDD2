@@ -1,0 +1,40 @@
+@model IEnumerable<BancaCore.Models.TipoTarjeta>
+@{ ViewData["Title"] = "Tipos de Tarjeta"; }
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h5 class="page-title mb-0">Tipos de Tarjeta</h5>
+    <a asp-action="Crear" class="btn btn-banca btn-sm">Nuevo</a>
+</div>
+
+<div class="card">
+    <div class="p-3 border-bottom d-flex gap-2">
+        <input id="buscarTiposTarjeta" type="text" class="form-control form-control-sm" style="max-width:360px" placeholder="Buscar por nombre..." />
+        <button id="btnMostrarTodosTiposTarjeta" type="button" class="btn btn-outline-secondary btn-sm">Mostrar todos</button>
+    </div>
+    <div class="card-body p-0">
+        <table class="table table-hover mb-0">
+            <thead><tr><th>Nombre</th><th></th></tr></thead>
+            <tbody>
+            @foreach(var t in Model){
+                <tr>
+                    <td>@t.Nombre</td>
+                    <td>
+                        <a asp-action="Editar" asp-route-id="@t.CodigoTipoTarjeta" class="btn btn-sm btn-outline-secondary">Editar</a>
+                        <a asp-action="ConfirmarEliminar" asp-route-id="@t.CodigoTipoTarjeta" class="btn btn-sm btn-outline-danger">Eliminar</a>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts{
+<script>
+document.getElementById('buscarTiposTarjeta').addEventListener('keyup', ()=>{
+    const q = document.getElementById('buscarTiposTarjeta').value.toLowerCase();
+    document.querySelectorAll('table tbody tr').forEach(r=> r.style.display = r.textContent.toLowerCase().includes(q)?'':'none');
+});
+document.getElementById('btnMostrarTodosTiposTarjeta').addEventListener('click', ()=>{ document.getElementById('buscarTiposTarjeta').value=''; document.getElementById('buscarTiposTarjeta').dispatchEvent(new Event('keyup')); });
+</script>
+}

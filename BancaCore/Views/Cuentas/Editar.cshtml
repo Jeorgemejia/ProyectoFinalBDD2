@@ -1,0 +1,41 @@
+@* Views/Cuentas/Editar.cshtml *@
+@model CuentaBancaria
+@{ ViewData["Title"] = "Editar Cuenta"; }
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h5 class="page-title mb-0"><i class="bi bi-pencil me-2"></i>Editar Cuenta</h5>
+    <a asp-action="Index" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>Volver</a>
+</div>
+
+<div class="card" style="max-width:760px">
+    <div class="card-body p-4">
+        <form asp-action="Editar" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="CodigoCuenta" />
+
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label asp-for="CodigoCliente" class="form-label fw-semibold">Cliente</label>
+                    <select asp-for="CodigoCliente" class="form-select" asp-items="ViewBag.Clientes"></select>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="CodigoSucursal" class="form-label fw-semibold">Sucursal</label>
+                    <select asp-for="CodigoSucursal" class="form-select" asp-items="ViewBag.Sucursales"></select>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="CodigoTipoCuenta" class="form-label fw-semibold">Tipo de cuenta</label>
+                    <select asp-for="CodigoTipoCuenta" class="form-select" asp-items="ViewBag.TiposCuenta"></select>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="CodigoMoneda" class="form-label fw-semibold">Moneda</label>
+                    <select asp-for="CodigoMoneda" class="form-select" asp-items="ViewBag.Monedas"></select>
+                </div>
+            </div>
+
+            <div class="mt-4 d-flex gap-2">
+                <button type="submit" class="btn btn-banca"><i class="bi bi-check-lg me-1"></i>Guardar cambios</button>
+                <a asp-action="Index" class="btn btn-outline-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>

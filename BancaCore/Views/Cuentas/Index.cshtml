@@ -1,0 +1,78 @@
+@model IEnumerable<BancaCore.Models.CuentaBancaria>
+@{
+    ViewData["Title"] = "Cuentas Bancarias";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h5 class="page-title mb-0"><i class="bi bi-credit-card-2-front me-2"></i>Cuentas Bancarias</h5>
+    <a asp-action="Crear" class="btn btn-banca btn-sm"><i class="bi bi-plus-circle me-1"></i>Abrir Cuenta</a>
+</div>
+@section Scripts {
+<script>
+function filtrar(){
+    const q = document.getElementById('buscar').value.toLowerCase();
+    document.querySelectorAll('table tbody tr').forEach(r=>{
+        const txt = r.textContent.toLowerCase();
+        r.style.display = txt.includes(q) ? '' : 'none';
+    });
+}
+document.getElementById('buscar').addEventListener('keyup', filtrar);
+document.getElementById('btnMostrarTodos').addEventListener('click', ()=>{ document.getElementById('buscar').value=''; filtrar(); });
+</script>
+}
+
+    <div class="card">
+    <div class="p-3 border-bottom d-flex gap-2">
+        <input id="buscar" type="text" class="form-control form-control-sm" style="max-width:320px" placeholder="Buscar por número, cliente, tipo, sucursal..." />
+        <button id="btnMostrarTodos" type="button" class="btn btn-outline-secondary btn-sm">Mostrar todos</button>
+    </div>
+    <div class="card-body p-0">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>N° Cuenta</th>
+                    <th>Cliente</th>
+                    <th>Tipo</th>
+                    <th>Sucursal</th>
+                    <th class="text-end">Saldo</th>
+                    <th>Apertura</th>
+                    <th>Estado</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var c in Model)
+                {
+                    <tr>
+                        <td class="font-monospace fw-bold small">@c.NumeroCuenta</td>
+                        <td class="fw-semibold">@c.NombreCliente</td>
+                        <td><span class="badge bg-light text-dark border">@c.NombreTipoCuenta</span></td>
+                        <td class="small text-muted">@c.NombreSucursal</td>
+                        <td class="text-end fw-bold @(c.SaldoActual >= 0 ? "text-success" : "text-danger")">
+                            @c.SimboloMoneda @c.SaldoActual.ToString("N2")
+                        </td>
+                        <td class="small text-muted">@c.FechaApertura.ToString("dd/MM/yyyy")</td>
+                        <td>
+                            @if (c.Estado)
+                            {
+                                <span class="badge bg-success">Activa</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">Cerrada</span>
+                            }
+                        </td>
+                        <td>
+                            <a asp-action="Detalle" asp-route-id="@c.CodigoCuenta" class="btn btn-sm btn-outline-primary me-1"><i class="bi bi-eye"></i></a>
+                        @if (c.Estado)
+                        {
+                            <a asp-action="ConfirmarCerrar" asp-route-id="@c.CodigoCuenta" class="btn btn-sm btn-outline-danger me-1" title="Cerrar"><i class="bi bi-x-circle"></i></a>
+                        }
+                        <a asp-action="Editar" asp-route-id="@c.CodigoCuenta" class="btn btn-sm btn-outline-secondary me-1" title="Editar"><i class="bi bi-pencil"></i></a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

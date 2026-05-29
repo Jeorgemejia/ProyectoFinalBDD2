@@ -1,0 +1,58 @@
+@* Prestamos/Index.cshtml *@
+@model IEnumerable<BancaCore.Models.Prestamo>
+@{ ViewData["Title"] = "Préstamos"; }
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h5 class="page-title mb-0"><i class="bi bi-cash-coin me-2"></i>Préstamos</h5>
+    <a asp-action="Crear" class="btn btn-banca btn-sm"><i class="bi bi-plus-circle me-1"></i>Nuevo Préstamo</a>
+</div>
+@section Scripts {
+<script>
+function filtrar(){
+    const q = document.getElementById('buscar').value.toLowerCase();
+    document.querySelectorAll('table tbody tr').forEach(r=>{
+        const txt = r.textContent.toLowerCase();
+        r.style.display = txt.includes(q) ? '' : 'none';
+    });
+}
+document.getElementById('buscar').addEventListener('keyup', filtrar);
+document.getElementById('btnMostrarTodos').addEventListener('click', ()=>{ document.getElementById('buscar').value=''; filtrar(); });
+</script>
+}
+
+<div class="card">
+    <div class="p-3 border-bottom d-flex gap-2">
+        <input id="buscar" type="text" class="form-control form-control-sm" style="max-width:320px" placeholder="Buscar por cliente, tipo, moneda..." />
+        <button id="btnMostrarTodos" type="button" class="btn btn-outline-secondary btn-sm">Mostrar todos</button>
+    </div>
+    <div class="card-body p-0">
+        <table class="table table-hover mb-0">
+            <thead><tr>
+                <th>#</th><th>Cliente</th><th>Tipo</th><th>Moneda</th>
+                <th class="text-end">Monto</th><th class="text-end">Saldo Pendiente</th>
+                <th>Tasa</th><th>Plazo</th><th>Desembolso</th><th></th>
+            </tr></thead>
+            <tbody>
+            @foreach (var p in Model)
+            {
+                <tr>
+                    <td class="small text-muted">#@p.CodigoPrestamo</td>
+                    <td class="fw-semibold">@p.NombreCliente</td>
+                    <td><span class="badge bg-light text-dark border">@p.NombreTipoPrestamo</span></td>
+                    <td class="small">@p.SimboloMoneda</td>
+                    <td class="text-end">@p.MontoSolicitado.ToString("N2")</td>
+                    <td class="text-end fw-bold text-danger">@p.SaldoPendiente.ToString("N2")</td>
+                    <td class="small">@p.TasaInteres%</td>
+                    <td class="small">@p.PlazoMeses m.</td>
+                    <td class="small text-muted">@p.FechaDesembolso.ToString("dd/MM/yyyy")</td>
+                    <td>
+                        <a asp-action="Detalle" asp-route-id="@p.CodigoPrestamo" class="btn btn-sm btn-outline-primary me-1"><i class="bi bi-eye"></i></a>
+                        <a asp-action="ConfirmarEliminar" asp-route-id="@p.CodigoPrestamo" class="btn btn-sm btn-outline-danger me-1" title="Eliminar"><i class="bi bi-person-x"></i></a>
+                        <a asp-action="Editar" asp-route-id="@p.CodigoPrestamo" class="btn btn-sm btn-outline-secondary" title="Editar"><i class="bi bi-pencil"></i></a>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>
