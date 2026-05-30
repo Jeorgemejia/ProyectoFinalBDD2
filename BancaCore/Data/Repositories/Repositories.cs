@@ -2,6 +2,8 @@ using BancaCore.Models;
 using BancaCore.Data.Repositories;
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
+using System.Data;
+using Dapper;
 
 namespace BancaCore.Controllers
 {
@@ -12,18 +14,21 @@ namespace BancaCore.Controllers
         private readonly TransaccionRepository _transaccionRepo;
         private readonly CuentaRepository _cuentaRepo;
         private readonly MonedaRepository _monedaRepo;
+        private readonly TipoTransaccionRepository _tipoTransaccionRepo;
 
         public TransaccionesController(ILogger<HomeController> logger,
             UsuarioRepository usuarioRepo,
             TransaccionRepository transaccionRepo,
             CuentaRepository cuentaRepo,
-            MonedaRepository monedaRepo)
+            MonedaRepository monedaRepo,
+            TipoTransaccionRepository tipoTransaccionRepo)
         {
             _logger = logger;
             _usuarioRepo = usuarioRepo;
             _transaccionRepo = transaccionRepo;
             _cuentaRepo = cuentaRepo;
             _monedaRepo = monedaRepo;
+            _tipoTransaccionRepo = tipoTransaccionRepo;
         }
 
         public async Task<IActionResult> Index()
@@ -48,7 +53,7 @@ namespace BancaCore.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Deposito(int cuentaId, decimal monto, int moneda, string descripcion)
         {
-            var (resultado, mensaje) = await _repo.DepositarAsync(cuentaId, monto, moneda, descripcion, User.Identity!.Name!);
+            var (resultado, mensaje) = await _transaccionRepo.DepositarAsync(cuentaId, monto, moneda, descripcion, User.Identity!.Name!);
             if (!resultado)
             {
                 ModelState.AddModelError(string.Empty, mensaje);
@@ -64,7 +69,7 @@ namespace BancaCore.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Retiro(int cuentaId, decimal monto, int moneda, string descripcion)
         {
-            var (resultado, mensaje) = await _repo.RetirarAsync(cuentaId, monto, moneda, descripcion, User.Identity!.Name!);
+            var (resultado, mensaje) = await _transaccionRepo.RetirarAsync(cuentaId, monto, moneda, descripcion, User.Identity!.Name!);
             if (!resultado)
             {
                 ModelState.AddModelError(string.Empty, mensaje);
@@ -80,7 +85,7 @@ namespace BancaCore.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Transferencia(int cuentaOrigen, int cuentaDestino, decimal monto, int moneda, string descripcion)
         {
-            var (resultado, mensaje) = await _repo.TransferirAsync(cuentaOrigen, cuentaDestino, monto, moneda, descripcion, User.Identity!.Name!);
+            var (resultado, mensaje) = await _transaccionRepo.TransferirAsync(cuentaOrigen, cuentaDestino, monto, moneda, descripcion, User.Identity!.Name!);
             if (!resultado)
             {
                 ModelState.AddModelError(string.Empty, mensaje);
@@ -96,6 +101,78 @@ namespace BancaCore.Controllers
         public IActionResult Error()
         {
             return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+        }
+    }
+
+    public class TipoTransaccionRepository
+    {
+        private readonly DbContext _db;
+        public TipoTransaccionRepository(DbContext db) { _db = db; }
+
+        public async Task<IEnumerable<TipoTransaccion>> GetAllAsync()
+        {
+            using var conn = _db.Open();
+            return await conn.QueryAsync<TipoTransaccion>("usp_ConsultarTipoTransaccion", commandType: CommandType.StoredProcedure);
+        }
+
+        public async Task<TipoTransaccion?> GetByIdAsync(int id)
+        {
+            using var conn = _db.Open();
+            return await conn.QueryFirstOrDefaultAsync<TipoTransaccion>("SELECT * FROM tbl_TipoTransaccion WHERE CodigoTipoTransaccion=@id", new { id });
+        }
+
+        public async Task<IEnumerable<TipoTransaccion>> SearchAsync(string nombre)
+        {
+            using var conn = _db.Open();
+            var p = new DynamicParameters();
+            p.Add("Nombre", nombre);
+            return await conn.QueryAsync<TipoTransaccion>("usp_BuscarTipoTransaccion", p, commandType: CommandType.StoredProcedure);
+        }
+
+        public async Task<(bool Resultado, string Mensaje)> CreateAsync(TipoTransaccion t, string usuario)
+        {
+            using var conn = _db.Open();
+            var p = new DynamicParameters();
+            p.Add("Nombre", t.Nombre);
+            p.Add("UsuarioCreacion", usuario);
+            p.Add("Resultado", dbType: System.Data.DbType.Boolean, direction: System.Data.ParameterDirection.Output);
+            p.Add("Mensaje", dbType: System.Data.DbType.String, size: 500, direction: System.Data.ParameterDirection.Output);
+
+            await conn.ExecuteAsync("usp_AgregarTipoTransaccion", p, commandType: CommandType.StoredProcedure);
+
+            return (p.Get<bool>("Resultado"), p.Get<string>("Mensaje") ?? string.Empty);
+        }
+
+        public async Task<(bool Resultado, string Mensaje)> UpdateAsync(TipoTransaccion t, string usuario)
+        {
+            using var conn = _db.Open();
+            var p = new DynamicParameters();
+            p.Add("CodigoTipoCuenta", t.CodigoTipoCuenta); // nombre param en SP: @CodigoTipoCuenta
+            p.Add("Nombre", t.Nombre);
+            p.Add("SaldoMinimo", t.SaldoMinimo);
+            p.Add("TasaInteres", t.TasaInteres);
+            p.Add("Estado", t.Estado);
+            p.Add("UsuarioModificacion", usuario);
+            p.Add("Resultado", dbType: System.Data.DbType.Boolean, direction: System.Data.ParameterDirection.Output);
+            p.Add("Mensaje", dbType: System.Data.DbType.String, size: 500, direction: System.Data.ParameterDirection.Output);
+
+            await conn.ExecuteAsync("usp_EditarTipoCuenta", p, commandType: CommandType.StoredProcedure);
+
+            return (p.Get<bool>("Resultado"), p.Get<string>("Mensaje") ?? string.Empty);
+        }
+
+        public async Task<(bool Resultado, string Mensaje)> DeleteAsync(int id, string usuario)
+        {
+            using var conn = _db.Open();
+            var p = new DynamicParameters();
+            p.Add("CodigoTipoCuenta", id);
+            p.Add("UsuarioEliminacion", usuario);
+            p.Add("Resultado", dbType: System.Data.DbType.Boolean, direction: System.Data.ParameterDirection.Output);
+            p.Add("Mensaje", dbType: System.Data.DbType.String, size: 500, direction: System.Data.ParameterDirection.Output);
+
+            await conn.ExecuteAsync("usp_EliminarTipoCuenta", p, commandType: CommandType.StoredProcedure);
+
+            return (p.Get<bool>("Resultado"), p.Get<string>("Mensaje") ?? string.Empty);
         }
     }
 }
