@@ -678,8 +678,15 @@ namespace BancaCore.Controllers
         public async Task<IActionResult> Crear(Cliente model)
         {
             if (!ModelState.IsValid) return View(model);
-            await _repo.CreateAsync(model, User.Identity!.Name!);
-            TempData["OK"] = "Cliente registrado exitosamente.";
+
+            var (resultado, mensaje) = await _repo.CreateAsync(model, User.Identity!.Name!);
+            if (!resultado)
+            {
+                ModelState.AddModelError(string.Empty, mensaje);
+                return View(model);
+            }
+
+            TempData["OK"] = mensaje;
             return RedirectToAction(nameof(Index));
         }
 
@@ -695,8 +702,15 @@ namespace BancaCore.Controllers
         public async Task<IActionResult> Editar(Cliente model)
         {
             if (!ModelState.IsValid) return View(model);
-            await _repo.UpdateAsync(model, User.Identity!.Name!);
-            TempData["OK"] = "Cliente actualizado.";
+
+            var (resultado, mensaje) = await _repo.UpdateAsync(model, User.Identity!.Name!);
+            if (!resultado)
+            {
+                ModelState.AddModelError(string.Empty, mensaje);
+                return View(model);
+            }
+
+            TempData["OK"] = mensaje;
             return RedirectToAction(nameof(Index));
         }
 
@@ -711,8 +725,16 @@ namespace BancaCore.Controllers
         [HttpPost]
         public async Task<IActionResult> Eliminar(int id)
         {
-            await _repo.DeleteAsync(id, User.Identity!.Name!);
-            TempData["OK"] = "Cliente desactivado.";
+            var (resultado, mensaje) = await _repo.DeleteAsync(id, User.Identity!.Name!);
+            if (!resultado)
+            {
+                var c = await _repo.GetByIdAsync(id);
+                if (c == null) return NotFound();
+                ModelState.AddModelError(string.Empty, mensaje);
+                return View("Eliminar", c);
+            }
+
+            TempData["OK"] = mensaje;
             return RedirectToAction(nameof(Index));
         }
     }

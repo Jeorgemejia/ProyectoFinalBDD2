@@ -1079,7 +1079,7 @@ namespace BancaCore.Data.Repositories
 
             await conn.ExecuteAsync("usp_EliminarPrestamo", par, commandType: CommandType.StoredProcedure);
             var resultado = par.Get<bool>("Resultado");
-            var mensaje = par.Get<string>("Mensaje");
+            var mensaje = p.Get<string>("Mensaje");
             return (resultado, mensaje ?? string.Empty);
         }
 
