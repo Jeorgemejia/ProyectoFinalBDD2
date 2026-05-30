@@ -682,11 +682,11 @@ namespace BancaCore.Controllers
             var (resultado, mensaje) = await _repo.CreateAsync(model, User.Identity!.Name!);
             if (!resultado)
             {
-                ModelState.AddModelError(string.Empty, mensaje); // muestra error exacto del SP
+                ModelState.AddModelError(string.Empty, mensaje); // muestra el mensaje EXACTO del SP
                 return View(model);
             }
 
-            TempData["OK"] = mensaje; // mensaje de éxito devuelto por el SP
+            TempData["OK"] = mensaje; // mensaje de éxito proveniente del SP
             return RedirectToAction(nameof(Index));
         }
 
