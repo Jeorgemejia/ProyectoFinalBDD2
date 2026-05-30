@@ -523,32 +523,15 @@ namespace BancaCore.Data.Repositories
         public async Task<IEnumerable<Cliente>> GetAllAsync()
         {
             using var conn = _db.Open();
-            // Usa el SP que lista clientes
             return await conn.QueryAsync<Cliente>("usp_ConsultarCliente", commandType: CommandType.StoredProcedure);
-        }
-
-        // Conserva este método (existía en el fichero original)
-        public async Task<bool> UpdateAsync(CuentaBancaria c, string usuario)
-        {
-            using var conn = _db.Open();
-            var rows = await conn.ExecuteAsync(@"
-                UPDATE tbl_CuentaBancaria SET
-                  CodigoCliente=@CodigoCliente, CodigoSucursal=@CodigoSucursal,
-                  CodigoTipoCuenta=@CodigoTipoCuenta, CodigoMoneda=@CodigoMoneda,
-                  UsuarioModificacion=@usuario, FechaModificacion=GETDATE()
-                WHERE CodigoCuenta=@CodigoCuenta",
-                new { c.CodigoCliente, c.CodigoSucursal, c.CodigoTipoCuenta, c.CodigoMoneda, usuario, c.CodigoCuenta });
-            return rows > 0;
         }
 
         public async Task<Cliente?> GetByIdAsync(int id)
         {
             using var conn = _db.Open();
-            return await conn.QueryFirstOrDefaultAsync<Cliente>(
-                "SELECT * FROM tbl_Cliente WHERE IdCliente = @id", new { id });
+            return await conn.QueryFirstOrDefaultAsync<Cliente>("SELECT * FROM tbl_Cliente WHERE IdCliente = @id", new { id });
         }
 
-        // Ahora usa usp_AgregarCliente y retorna Resultado + Mensaje
         public async Task<(bool Resultado, string Mensaje)> CreateAsync(Cliente c, string usuario)
         {
             using var conn = _db.Open();
@@ -573,7 +556,6 @@ namespace BancaCore.Data.Repositories
             return (resultado, mensaje ?? string.Empty);
         }
 
-        // Actualiza usando usp_EditarCliente y devuelve Resultado + Mensaje
         public async Task<(bool Resultado, string Mensaje)> UpdateAsync(Cliente c, string usuario)
         {
             using var conn = _db.Open();
@@ -600,7 +582,6 @@ namespace BancaCore.Data.Repositories
             return (resultado, mensaje ?? string.Empty);
         }
 
-        // Eliminación lógica with usp_EliminarCliente
         public async Task<(bool Resultado, string Mensaje)> DeleteAsync(int id, string usuario)
         {
             using var conn = _db.Open();
@@ -617,7 +598,6 @@ namespace BancaCore.Data.Repositories
             return (resultado, mensaje ?? string.Empty);
         }
 
-        // Búsqueda mediante usp_BuscarCliente
         public async Task<IEnumerable<Cliente>> SearchAsync(string nombres)
         {
             using var conn = _db.Open();
