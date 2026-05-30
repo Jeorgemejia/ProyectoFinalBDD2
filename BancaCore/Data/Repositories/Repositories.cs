@@ -563,8 +563,8 @@ namespace BancaCore.Data.Repositories
             p.Add("Email", c.Email);
             p.Add("Direccion", c.Direccion);
             p.Add("UsuarioCreacion", usuario);
-            p.Add("Resultado", dbType: DbType.Boolean, direction: ParameterDirection.Output);
-            p.Add("Mensaje", dbType: DbType.String, size: 500, direction: ParameterDirection.Output);
+            p.Add("Resultado", dbType: System.Data.DbType.Boolean, direction: System.Data.ParameterDirection.Output);
+            p.Add("Mensaje", dbType: System.Data.DbType.String, size: 500, direction: System.Data.ParameterDirection.Output);
 
             await conn.ExecuteAsync("usp_AgregarCliente", p, commandType: CommandType.StoredProcedure);
 
@@ -590,8 +590,8 @@ namespace BancaCore.Data.Repositories
             p.Add("Direccion", c.Direccion);
             p.Add("Estado", c.Estado);
             p.Add("UsuarioModificacion", usuario);
-            p.Add("Resultado", dbType: DbType.Boolean, direction: ParameterDirection.Output);
-            p.Add("Mensaje", dbType: DbType.String, size: 500, direction: ParameterDirection.Output);
+            p.Add("Resultado", dbType: System.Data.DbType.Boolean, direction: System.Data.ParameterDirection.Output);
+            p.Add("Mensaje", dbType: System.Data.DbType.String, size: 500, direction: System.Data.ParameterDirection.Output);
 
             await conn.ExecuteAsync("usp_EditarCliente", p, commandType: CommandType.StoredProcedure);
 
@@ -600,15 +600,15 @@ namespace BancaCore.Data.Repositories
             return (resultado, mensaje ?? string.Empty);
         }
 
-        // Eliminación lógica con usp_EliminarCliente
+        // Eliminación lógica with usp_EliminarCliente
         public async Task<(bool Resultado, string Mensaje)> DeleteAsync(int id, string usuario)
         {
             using var conn = _db.Open();
             var p = new DynamicParameters();
             p.Add("IdCliente", id);
             p.Add("UsuarioEliminacion", usuario);
-            p.Add("Resultado", dbType: DbType.Boolean, direction: ParameterDirection.Output);
-            p.Add("Mensaje", dbType: DbType.String, size: 500, direction: ParameterDirection.Output);
+            p.Add("Resultado", dbType: System.Data.DbType.Boolean, direction: System.Data.ParameterDirection.Output);
+            p.Add("Mensaje", dbType: System.Data.DbType.String, size: 500, direction: System.Data.ParameterDirection.Output);
 
             await conn.ExecuteAsync("usp_EliminarCliente", p, commandType: CommandType.StoredProcedure);
 
