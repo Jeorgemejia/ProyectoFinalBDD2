@@ -899,6 +899,85 @@ namespace BancaCore.Data.Repositories
                 ORDER BY t.FechaHora DESC", new { cuentaId });
         }
 
+        // CREATE -> usp_AgregarTransaccion (devuelve Resultado + Mensaje desde la BD)
+        public async Task<(bool Resultado, string Mensaje)> CreateAsync(Transaccion t, string usuario)
+        {
+            using var conn = _db.Open();
+            var p = new DynamicParameters();
+            p.Add("CodigoCuentaOrigen", t.CodigoCuentaOrigen);
+            p.Add("CodigoCuentaDestino", t.CodigoCuentaDestino);
+            p.Add("CodigoTipoTransaccion", t.CodigoTipoTransaccion);
+            p.Add("CodigoMoneda", t.CodigoMoneda);
+            p.Add("Monto", t.Monto);
+            p.Add("TipoCambioAplicado", t.TipoCambioAplicado);
+            p.Add("FechaHora", t.FechaHora);
+            p.Add("Descripcion", t.Descripcion);
+            p.Add("UsuarioCreacion", usuario);
+            p.Add("Resultado", dbType: System.Data.DbType.Boolean, direction: System.Data.ParameterDirection.Output);
+            p.Add("Mensaje", dbType: System.Data.DbType.String, size: 500, direction: System.Data.ParameterDirection.Output);
+
+            await conn.ExecuteAsync("usp_AgregarTransaccion", p, commandType: CommandType.StoredProcedure);
+
+            var resultado = p.Get<bool>("Resultado");
+            var mensaje = p.Get<string>("Mensaje");
+            return (resultado, mensaje ?? string.Empty);
+        }
+
+        // UPDATE -> usp_EditarTransaccion (devuelve Resultado + Mensaje desde la BD)
+        public async Task<(bool Resultado, string Mensaje)> UpdateAsync(Transaccion t, string usuario)
+        {
+            using var conn = _db.Open();
+            var p = new DynamicParameters();
+            p.Add("CodigoTransaccion", t.CodigoTransaccion);
+            p.Add("CodigoCuentaOrigen", t.CodigoCuentaOrigen);
+            p.Add("CodigoCuentaDestino", t.CodigoCuentaDestino);
+            p.Add("CodigoTipoTransaccion", t.CodigoTipoTransaccion);
+            p.Add("CodigoMoneda", t.CodigoMoneda);
+            p.Add("Monto", t.Monto);
+            p.Add("TipoCambioAplicado", t.TipoCambioAplicado);
+            p.Add("FechaHora", t.FechaHora);
+            p.Add("Descripcion", t.Descripcion);
+            p.Add("Estado", t.Estado);
+            p.Add("UsuarioModificacion", usuario);
+            p.Add("Resultado", dbType: System.Data.DbType.Boolean, direction: System.Data.ParameterDirection.Output);
+            p.Add("Mensaje", dbType: System.Data.DbType.String, size: 500, direction: System.Data.ParameterDirection.Output);
+
+            await conn.ExecuteAsync("usp_EditarTransaccion", p, commandType: CommandType.StoredProcedure);
+
+            var resultado = p.Get<bool>("Resultado");
+            var mensaje = p.Get<string>("Mensaje");
+            return (resultado, mensaje ?? string.Empty);
+        }
+
+        // DELETE -> usp_EliminarTransaccion (eliminación lógica)
+        public async Task<(bool Resultado, string Mensaje)> DeleteAsync(int id, string usuario)
+        {
+            using var conn = _db.Open();
+            var p = new DynamicParameters();
+            p.Add("CodigoTransaccion", id);
+            p.Add("UsuarioEliminacion", usuario);
+            p.Add("Resultado", dbType: System.Data.DbType.Boolean, direction: System.Data.ParameterDirection.Output);
+            p.Add("Mensaje", dbType: System.Data.DbType.String, size: 500, direction: System.Data.ParameterDirection.Output);
+
+            await conn.ExecuteAsync("usp_EliminarTransaccion", p, commandType: CommandType.StoredProcedure);
+
+            var resultado = p.Get<bool>("Resultado");
+            var mensaje = p.Get<string>("Mensaje");
+            return (resultado, mensaje ?? string.Empty);
+        }
+
+        // SEARCH -> usp_BuscarTransaccion
+        public async Task<IEnumerable<Transaccion>> SearchAsync(string descripcion)
+        {
+            using var conn = _db.Open();
+            var p = new DynamicParameters();
+            p.Add("Descripcion", descripcion);
+            // Nota: usp_BuscarTransaccion devuelve columnas de tbl_Transaccion; los campos join (NumeroCuentaOrigen, NombreTipoTransaccion, etc.)
+            // pueden quedar vacíos. Si necesitas esos campos, mantendremos una query con joins o haremos un JOIN posterior.
+            return await conn.QueryAsync<Transaccion>("usp_BuscarTransaccion", p, commandType: CommandType.StoredProcedure);
+        }
+
+        // Métodos transaccionales existentes (se mantienen)
         public async Task DepositarAsync(int cuentaId, decimal monto, int moneda, string descripcion, string usuario)
         {
             using var conn = _db.Open();
