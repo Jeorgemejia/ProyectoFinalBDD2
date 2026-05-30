@@ -523,10 +523,11 @@ namespace BancaCore.Data.Repositories
         public async Task<IEnumerable<Cliente>> GetAllAsync()
         {
             using var conn = _db.Open();
-            // Ahora usamos el stored procedure usp_ConsultarCliente
+            // Usa el SP que lista clientes
             return await conn.QueryAsync<Cliente>("usp_ConsultarCliente", commandType: CommandType.StoredProcedure);
         }
 
+        // Conserva este método (existía en el fichero original)
         public async Task<bool> UpdateAsync(CuentaBancaria c, string usuario)
         {
             using var conn = _db.Open();
@@ -547,44 +548,82 @@ namespace BancaCore.Data.Repositories
                 "SELECT * FROM tbl_Cliente WHERE IdCliente = @id", new { id });
         }
 
-        public async Task<int> CreateAsync(Cliente c, string usuario)
+        // Ahora usa usp_AgregarCliente y retorna Resultado + Mensaje
+        public async Task<(bool Resultado, string Mensaje)> CreateAsync(Cliente c, string usuario)
         {
             using var conn = _db.Open();
-            return await conn.ExecuteScalarAsync<int>(@"
-                INSERT INTO tbl_Cliente
-                  (TipoCliente,Nombres,Apellidos,DPI,NIT,FechaNacimiento,Telefono,Email,Direccion,
-                   Estado,UsuarioCreacion,FechaCreacion)
-                VALUES
-                  (@TipoCliente,@Nombres,@Apellidos,@DPI,@NIT,@FechaNacimiento,@Telefono,@Email,@Direccion,
-                   1,@usuario,GETDATE());
-                SELECT SCOPE_IDENTITY();",
-                new { c.TipoCliente, c.Nombres, c.Apellidos, c.DPI, c.NIT,
-                      c.FechaNacimiento, c.Telefono, c.Email, c.Direccion, usuario });
+            var p = new DynamicParameters();
+            p.Add("TipoCliente", c.TipoCliente);
+            p.Add("Nombres", c.Nombres);
+            p.Add("Apellidos", c.Apellidos);
+            p.Add("DPI", c.DPI);
+            p.Add("NIT", c.NIT);
+            p.Add("FechaNacimiento", c.FechaNacimiento);
+            p.Add("Telefono", c.Telefono);
+            p.Add("Email", c.Email);
+            p.Add("Direccion", c.Direccion);
+            p.Add("UsuarioCreacion", usuario);
+            p.Add("Resultado", dbType: DbType.Boolean, direction: ParameterDirection.Output);
+            p.Add("Mensaje", dbType: DbType.String, size: 500, direction: ParameterDirection.Output);
+
+            await conn.ExecuteAsync("usp_AgregarCliente", p, commandType: CommandType.StoredProcedure);
+
+            var resultado = p.Get<bool>("Resultado");
+            var mensaje = p.Get<string>("Mensaje");
+            return (resultado, mensaje ?? string.Empty);
         }
 
-        public async Task<bool> UpdateAsync(Cliente c, string usuario)
+        // Actualiza usando usp_EditarCliente y devuelve Resultado + Mensaje
+        public async Task<(bool Resultado, string Mensaje)> UpdateAsync(Cliente c, string usuario)
         {
             using var conn = _db.Open();
-            var rows = await conn.ExecuteAsync(@"
-                UPDATE tbl_Cliente SET
-                  TipoCliente=@TipoCliente, Nombres=@Nombres, Apellidos=@Apellidos,
-                  DPI=@DPI, NIT=@NIT, FechaNacimiento=@FechaNacimiento,
-                  Telefono=@Telefono, Email=@Email, Direccion=@Direccion,
-                  UsuarioModificacion=@usuario, FechaModificacion=GETDATE()
-                WHERE IdCliente=@IdCliente",
-                new { c.TipoCliente, c.Nombres, c.Apellidos, c.DPI, c.NIT,
-                      c.FechaNacimiento, c.Telefono, c.Email, c.Direccion, usuario, c.IdCliente });
-            return rows > 0;
+            var p = new DynamicParameters();
+            p.Add("IdCliente", c.IdCliente);
+            p.Add("TipoCliente", c.TipoCliente);
+            p.Add("Nombres", c.Nombres);
+            p.Add("Apellidos", c.Apellidos);
+            p.Add("DPI", c.DPI);
+            p.Add("NIT", c.NIT);
+            p.Add("FechaNacimiento", c.FechaNacimiento);
+            p.Add("Telefono", c.Telefono);
+            p.Add("Email", c.Email);
+            p.Add("Direccion", c.Direccion);
+            p.Add("Estado", c.Estado);
+            p.Add("UsuarioModificacion", usuario);
+            p.Add("Resultado", dbType: DbType.Boolean, direction: ParameterDirection.Output);
+            p.Add("Mensaje", dbType: DbType.String, size: 500, direction: ParameterDirection.Output);
+
+            await conn.ExecuteAsync("usp_EditarCliente", p, commandType: CommandType.StoredProcedure);
+
+            var resultado = p.Get<bool>("Resultado");
+            var mensaje = p.Get<string>("Mensaje");
+            return (resultado, mensaje ?? string.Empty);
         }
 
-        public async Task<bool> DeleteAsync(int id, string usuario)
+        // Eliminación lógica con usp_EliminarCliente
+        public async Task<(bool Resultado, string Mensaje)> DeleteAsync(int id, string usuario)
         {
             using var conn = _db.Open();
-            var rows = await conn.ExecuteAsync(@"
-                UPDATE tbl_Cliente SET Estado=0,
-                  UsuarioEliminacion=@usuario, FechaEliminacion=GETDATE()
-                WHERE IdCliente=@id", new { id, usuario });
-            return rows > 0;
+            var p = new DynamicParameters();
+            p.Add("IdCliente", id);
+            p.Add("UsuarioEliminacion", usuario);
+            p.Add("Resultado", dbType: DbType.Boolean, direction: ParameterDirection.Output);
+            p.Add("Mensaje", dbType: DbType.String, size: 500, direction: ParameterDirection.Output);
+
+            await conn.ExecuteAsync("usp_EliminarCliente", p, commandType: CommandType.StoredProcedure);
+
+            var resultado = p.Get<bool>("Resultado");
+            var mensaje = p.Get<string>("Mensaje");
+            return (resultado, mensaje ?? string.Empty);
+        }
+
+        // Búsqueda mediante usp_BuscarCliente
+        public async Task<IEnumerable<Cliente>> SearchAsync(string nombres)
+        {
+            using var conn = _db.Open();
+            var p = new DynamicParameters();
+            p.Add("Nombres", nombres);
+            return await conn.QueryAsync<Cliente>("usp_BuscarCliente", p, commandType: CommandType.StoredProcedure);
         }
     }
 }
