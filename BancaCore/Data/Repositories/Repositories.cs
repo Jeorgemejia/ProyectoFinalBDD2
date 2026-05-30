@@ -175,4 +175,86 @@ namespace BancaCore.Controllers
             return (p.Get<bool>("Resultado"), p.Get<string>("Mensaje") ?? string.Empty);
         }
     }
+
+    public class CuentaRepository
+    {
+        private readonly DbContext _db;
+        public CuentaRepository(DbContext db) { _db = db; }
+
+        public async Task<IEnumerable<CuentaBancaria>> GetAllAsync()
+        {
+            using var conn = _db.Open();
+            return await conn.QueryAsync<CuentaBancaria>("usp_ConsultarCuentaBancaria", commandType: CommandType.StoredProcedure);
+        }
+
+        public async Task<CuentaBancaria?> GetByIdAsync(int id)
+        {
+            using var conn = _db.Open();
+            return await conn.QueryFirstOrDefaultAsync<CuentaBancaria>("SELECT * FROM tbl_CuentaBancaria WHERE CodigoCuenta=@id", new { id });
+        }
+
+        public async Task<(bool Resultado, string Mensaje)> CreateAsync(CuentaBancaria c, string usuario)
+        {
+            using var conn = _db.Open();
+            var seq = await conn.ExecuteScalarAsync<int>("SELECT ISNULL(MAX(CodigoCuenta),0)+1 FROM tbl_CuentaBancaria");
+            c.NumeroCuenta = $"{c.CodigoSucursal:D3}-{c.CodigoTipoCuenta:D2}-{seq:D8}";
+
+            var p = new DynamicParameters();
+            p.Add("NumeroCuenta", c.NumeroCuenta);
+            p.Add("CodigoCliente", c.CodigoCliente);
+            p.Add("CodigoSucursal", c.CodigoSucursal);
+            p.Add("CodigoTipoCuenta", c.CodigoTipoCuenta);
+            p.Add("CodigoMoneda", c.CodigoMoneda);
+            p.Add("SaldoActual", c.SaldoActual);
+            p.Add("FechaApertura", c.FechaApertura);
+            p.Add("UsuarioCreacion", usuario);
+            p.Add("Resultado", dbType: DbType.Boolean, direction: ParameterDirection.Output);
+            p.Add("Mensaje", dbType: DbType.String, size: 500, direction: ParameterDirection.Output);
+
+            await conn.ExecuteAsync("usp_AgregarCuentaBancaria", p, commandType: CommandType.StoredProcedure);
+            return (p.Get<bool>("Resultado"), p.Get<string>("Mensaje") ?? string.Empty);
+        }
+
+        public async Task<(bool Resultado, string Mensaje)> UpdateAsync(CuentaBancaria c, string usuario)
+        {
+            using var conn = _db.Open();
+            var p = new DynamicParameters();
+            p.Add("CodigoCuenta", c.CodigoCuenta);
+            p.Add("NumeroCuenta", c.NumeroCuenta);
+            p.Add("CodigoCliente", c.CodigoCliente);
+            p.Add("CodigoSucursal", c.CodigoSucursal);
+            p.Add("CodigoTipoCuenta", c.CodigoTipoCuenta);
+            p.Add("CodigoMoneda", c.CodigoMoneda);
+            p.Add("SaldoActual", c.SaldoActual);
+            p.Add("FechaApertura", c.FechaApertura);
+            p.Add("Estado", c.Estado);
+            p.Add("UsuarioModificacion", usuario);
+            p.Add("Resultado", dbType: DbType.Boolean, direction: ParameterDirection.Output);
+            p.Add("Mensaje", dbType: DbType.String, size: 500, direction: ParameterDirection.Output);
+
+            await conn.ExecuteAsync("usp_EditarCuentaBancaria", p, commandType: CommandType.StoredProcedure);
+            return (p.Get<bool>("Resultado"), p.Get<string>("Mensaje") ?? string.Empty);
+        }
+
+        public async Task<(bool Resultado, string Mensaje)> CerrarAsync(int id, string usuario)
+        {
+            using var conn = _db.Open();
+            var p = new DynamicParameters();
+            p.Add("CodigoCuenta", id);
+            p.Add("UsuarioEliminacion", usuario);
+            p.Add("Resultado", dbType: DbType.Boolean, direction: ParameterDirection.Output);
+            p.Add("Mensaje", dbType: DbType.String, size: 500, direction: ParameterDirection.Output);
+
+            await conn.ExecuteAsync("usp_EliminarCuentaBancaria", p, commandType: CommandType.StoredProcedure);
+            return (p.Get<bool>("Resultado"), p.Get<string>("Mensaje") ?? string.Empty);
+        }
+
+        public async Task<IEnumerable<CuentaBancaria>> SearchAsync(string numeroCuenta)
+        {
+            using var conn = _db.Open();
+            var p = new DynamicParameters();
+            p.Add("NumeroCuenta", numeroCuenta);
+            return await conn.QueryAsync<CuentaBancaria>("usp_BuscarCuentaBancaria", p, commandType: CommandType.StoredProcedure);
+        }
+    }
 }

@@ -1146,16 +1146,18 @@ namespace BancaCore.Controllers
         public async Task<IActionResult> Crear(Prestamo model)
         {
             if (!ModelState.IsValid) { await CargarSelectLists(); return View(model); }
-            var resultado = await _repo.CreateAsync(model, User.Identity!.Name!);
-            if (resultado <= 0)
-            {
-                ModelState.AddModelError(string.Empty, "No se pudo crear el préstamo.");
-                await CargarSelectLists();
-                return View(model);
-            }
-            TempData["OK"] = "Préstamo creado.";
-            return RedirectToAction(nameof(Index));
-        }
+
+    var (resultado, mensaje) = await _repo.CreateAsync(model, User.Identity!.Name!);
+    if (!resultado)
+    {
+        ModelState.AddModelError(string.Empty, mensaje);
+        await CargarSelectLists();
+        return View(model);
+    }
+
+    TempData["OK"] = mensaje;
+    return RedirectToAction(nameof(Index));
+}
 
         public async Task<IActionResult> Editar(int id)
         {
@@ -1170,16 +1172,18 @@ namespace BancaCore.Controllers
         public async Task<IActionResult> Editar(Prestamo model)
         {
             if (!ModelState.IsValid) { await CargarSelectLists(); return View(model); }
-            var resultado = await _repo.UpdateAsync(model, User.Identity!.Name!);
-            if (resultado <= 0)
-            {
-                ModelState.AddModelError(string.Empty, "No se pudo actualizar el préstamo.");
-                await CargarSelectLists();
-                return View(model);
-            }
-            TempData["OK"] = "Préstamo actualizado.";
-            return RedirectToAction(nameof(Index));
-        }
+
+    var (resultado, mensaje) = await _repo.UpdateAsync(model, User.Identity!.Name!);
+    if (!resultado)
+    {
+        ModelState.AddModelError(string.Empty, mensaje);
+        await CargarSelectLists();
+        return View(model);
+    }
+
+    TempData["OK"] = mensaje;
+    return RedirectToAction(nameof(Index));
+}
 
         // GET: confirmación para eliminar
         public async Task<IActionResult> ConfirmarEliminar(int id)
@@ -1192,15 +1196,15 @@ namespace BancaCore.Controllers
         [HttpPost]
         public async Task<IActionResult> Eliminar(int id)
         {
-            var resultado = await _repo.DeleteAsync(id, User.Identity!.Name!);
-            if (resultado <= 0)
+            var (resultado, mensaje) = await _repo.DeleteAsync(id, User.Identity!.Name!);
+            if (!resultado)
             {
                 var p = await _repo.GetByIdAsync(id);
                 if (p == null) return NotFound();
-                ModelState.AddModelError(string.Empty, "No se pudo eliminar el préstamo.");
+                ModelState.AddModelError(string.Empty, mensaje);
                 return View("Eliminar", p);
             }
-            TempData["OK"] = "Préstamo eliminado.";
+            TempData["OK"] = mensaje;
             return RedirectToAction(nameof(Index));
         }
 
