@@ -35,6 +35,12 @@ namespace BancaCore.Data.Repositories
                 new { m.Nombre, m.Simbolo, m.TipoCambio, usuario });
         }
 
+        public async Task<IEnumerable<Moneda>> SearchAsync(string nombre)
+        {
+            using var conn = _db.Open();
+            return await conn.QueryAsync<Moneda>("SELECT * FROM tbl_moneda WHERE Nombre LIKE '%' + @nombre + '%' AND Estado=1 ORDER BY Nombre", new { nombre });
+        }
+
         public async Task<bool> UpdateAsync(Moneda m, string usuario)
         {
             using var conn = _db.Open();
@@ -65,6 +71,12 @@ namespace BancaCore.Data.Repositories
         {
             using var conn = _db.Open();
             return await conn.QueryAsync<TipoCuenta>("SELECT * FROM tbl_TipoCuenta WHERE Estado=1 ORDER BY Nombre");
+        }
+
+        public async Task<IEnumerable<TipoCuenta>> SearchAsync(string nombre)
+        {
+            using var conn = _db.Open();
+            return await conn.QueryAsync<TipoCuenta>("SELECT * FROM tbl_TipoCuenta WHERE Nombre LIKE '%' + @nombre + '%' AND Estado=1 ORDER BY Nombre", new { nombre });
         }
 
         public async Task<TipoCuenta?> GetByIdAsync(int id)
@@ -128,6 +140,12 @@ namespace BancaCore.Data.Repositories
                 INSERT INTO tbl_TipoTransaccion (Nombre,Estado,UsuarioCreacion,FechaCreacion)
                 VALUES (@Nombre,1,@usuario,GETDATE()); SELECT SCOPE_IDENTITY();",
                 new { t.Nombre, usuario });
+        }
+
+        public async Task<IEnumerable<TipoTransaccion>> SearchAsync(string nombre)
+        {
+            using var conn = _db.Open();
+            return await conn.QueryAsync<TipoTransaccion>("SELECT * FROM tbl_TipoTransaccion WHERE Nombre LIKE '%' + @nombre + '%' AND Estado=1 ORDER BY Nombre", new { nombre });
         }
 
         public async Task<bool> UpdateAsync(TipoTransaccion t, string usuario)
@@ -463,8 +481,17 @@ namespace BancaCore.Data.Repositories
         public async Task<IEnumerable<Sucursal>> GetAllAsync()
         {
             using var conn = _db.Open();
+            // Use stored procedure usp_ConsultarSucursal to fetch branches
             return await conn.QueryAsync<Sucursal>(
-                "SELECT * FROM tbl_Sucursal WHERE Estado=1 ORDER BY Nombre");
+                "usp_ConsultarSucursal", commandType: System.Data.CommandType.StoredProcedure);
+        }
+
+        public async Task<IEnumerable<Sucursal>> SearchAsync(string nombre)
+        {
+            using var conn = _db.Open();
+            var p = new DynamicParameters();
+            p.Add("Nombre", nombre);
+            return await conn.QueryAsync<Sucursal>("usp_BuscarSucursal", p, commandType: System.Data.CommandType.StoredProcedure);
         }
 
         public async Task<Sucursal?> GetByIdAsync(int id)
@@ -492,25 +519,40 @@ namespace BancaCore.Data.Repositories
             return (resultado, mensaje ?? "");
         }
 
-        public async Task<bool> UpdateAsync(Sucursal s, string usuario)
+        public async Task<(bool Resultado, string Mensaje)> UpdateAsync(Sucursal s, string usuario)
         {
             using var conn = _db.Open();
-            var rows = await conn.ExecuteAsync(@"
-                UPDATE tbl_Sucursal SET Nombre=@Nombre, Direccion=@Direccion, Telefono=@Telefono,
-                  UsuarioModificacion=@usuario, FechaModificacion=GETDATE()
-                WHERE CodigoSucursal=@CodigoSucursal",
-                new { s.Nombre, s.Direccion, s.Telefono, usuario, s.CodigoSucursal });
-            return rows > 0;
+            var p = new DynamicParameters();
+            p.Add("CodigoSucursal", s.CodigoSucursal);
+            p.Add("Nombre", s.Nombre);
+            p.Add("Direccion", s.Direccion);
+            p.Add("Telefono", s.Telefono);
+            p.Add("Estado", s.Estado);
+            p.Add("UsuarioModificacion", usuario);
+            p.Add("Resultado", dbType: System.Data.DbType.Boolean, direction: System.Data.ParameterDirection.Output);
+            p.Add("Mensaje", dbType: System.Data.DbType.String, size: 500, direction: System.Data.ParameterDirection.Output);
+
+            await conn.ExecuteAsync("usp_EditarSucursal", p, commandType: System.Data.CommandType.StoredProcedure);
+
+            var resultado = p.Get<bool>("Resultado");
+            var mensaje = p.Get<string>("Mensaje");
+            return (resultado, mensaje ?? string.Empty);
         }
 
-        public async Task<bool> DeleteAsync(int id, string usuario)
+        public async Task<(bool Resultado, string Mensaje)> DeleteAsync(int id, string usuario)
         {
             using var conn = _db.Open();
-            var rows = await conn.ExecuteAsync(@"
-                UPDATE tbl_Sucursal SET Estado=0,
-                  UsuarioEliminacion=@usuario, FechaEliminacion=GETDATE()
-                WHERE CodigoSucursal=@id", new { id, usuario });
-            return rows > 0;
+            var p = new DynamicParameters();
+            p.Add("CodigoSucursal", id);
+            p.Add("UsuarioEliminacion", usuario);
+            p.Add("Resultado", dbType: System.Data.DbType.Boolean, direction: System.Data.ParameterDirection.Output);
+            p.Add("Mensaje", dbType: System.Data.DbType.String, size: 500, direction: System.Data.ParameterDirection.Output);
+
+            await conn.ExecuteAsync("usp_EliminarSucursal", p, commandType: System.Data.CommandType.StoredProcedure);
+
+            var resultado = p.Get<bool>("Resultado");
+            var mensaje = p.Get<string>("Mensaje");
+            return (resultado, mensaje ?? string.Empty);
         }
     }
 }
