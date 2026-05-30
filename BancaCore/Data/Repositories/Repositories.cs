@@ -523,8 +523,8 @@ namespace BancaCore.Data.Repositories
         public async Task<IEnumerable<Cliente>> GetAllAsync()
         {
             using var conn = _db.Open();
-            return await conn.QueryAsync<Cliente>(
-                "SELECT * FROM tbl_Cliente WHERE Estado = 1 ORDER BY Apellidos, Nombres");
+            // Ahora usamos el stored procedure usp_ConsultarCliente
+            return await conn.QueryAsync<Cliente>("usp_ConsultarCliente", commandType: CommandType.StoredProcedure);
         }
 
         public async Task<bool> UpdateAsync(CuentaBancaria c, string usuario)
