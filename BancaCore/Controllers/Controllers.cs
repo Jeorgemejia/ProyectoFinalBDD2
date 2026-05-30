@@ -37,10 +37,10 @@ namespace BancaCore.Controllers
 
             var claims = new List<Claim>
             {
-                new Claim(ClaimTypes.Name,  user.Usuario),
-                new Claim(ClaimTypes.Role,  user.Rol),
-                new Claim("Sucursal",       user.CodigoSucursal.ToString()),
-                new Claim("NombreSucursal", user.NombreSucursal)
+                new(ClaimTypes.Name,  user.Usuario),
+                new(ClaimTypes.Role,  user.Rol),
+                new("Sucursal",       user.CodigoSucursal.ToString()),
+                new("NombreSucursal", user.NombreSucursal)
             };
 
             var identity  = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
