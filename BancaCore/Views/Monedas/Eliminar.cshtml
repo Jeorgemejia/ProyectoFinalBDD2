@@ -11,6 +11,7 @@
         <p>¿Eliminar moneda <strong>@Model.Nombre</strong>?</p>
         <form asp-action="Eliminar" method="post">
             @Html.AntiForgeryToken()
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
             <input type="hidden" name="id" value="@Model.CodigoMoneda" />
             <div class="mt-3">
                 <button class="btn btn-danger">Eliminar</button>
