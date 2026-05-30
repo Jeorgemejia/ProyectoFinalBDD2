@@ -7,24 +7,51 @@
     <a asp-action="Crear" class="btn btn-banca btn-sm"><i class="bi bi-plus-circle me-1"></i>Nueva Sucursal</a>
 </div>
 
-@section Scripts {
-<script>
-function filtrar(){
-    const q = document.getElementById('buscar').value.toLowerCase();
-    document.querySelectorAll('.row.g-3 > .col-md-4').forEach(card=>{
-        const txt = card.textContent.toLowerCase();
-        card.style.display = txt.includes(q) ? '' : 'none';
-    });
+@{ var lista = Model as IEnumerable<BancaCore.Models.Sucursal>; var total = lista?.Count() ?? 0; }
+@if (!string.IsNullOrWhiteSpace((string)ViewBag.Query))
+{
+    <div class="mb-2"><strong>Resultados para "@ViewBag.Query":</strong> @total registros</div>
 }
-document.getElementById('buscar').addEventListener('keyup', filtrar);
-document.getElementById('btnMostrarTodos').addEventListener('click', ()=>{ document.getElementById('buscar').value=''; filtrar(); });
-</script>
+else
+{
+    <div class="mb-2"><strong>Total sucursales:</strong> @total registros</div>
 }
 
 <div class="p-3 border-bottom d-flex gap-2 mb-3">
-    <input id="buscar" type="text" class="form-control form-control-sm" style="max-width:360px" placeholder="Buscar por nombre, dirección, teléfono..." />
-    <button id="btnMostrarTodos" type="button" class="btn btn-outline-secondary btn-sm">Mostrar todos</button>
+    <form id="formBuscar" class="d-flex w-100 gap-2" method="get" asp-action="Index" asp-controller="Sucursales">
+        <input name="q" id="buscar" value="@(ViewBag.Query ?? "")" type="text" class="form-control form-control-sm" style="max-width:360px" placeholder="Buscar por nombre, dirección, teléfono..." />
+        <button type="submit" class="btn btn-banca btn-sm">Buscar</button>
+        <button id="btnMostrarTodos" type="button" class="btn btn-outline-secondary btn-sm">Mostrar todos</button>
+    </form>
 </div>
+
+@section Scripts {
+<script>
+document.getElementById('btnMostrarTodos').addEventListener('click', ()=>{
+    document.getElementById('buscar').value='';
+    var f = document.getElementById('formBuscar');
+    if(f) f.submit();
+});
+// Ensure form submission navigates even if taghelpers or other scripts interfere
+(function(){
+    var f = document.getElementById('formBuscar');
+    if(!f) return;
+    f.addEventListener('submit', function(e){
+        // allow normal submit when browser will handle it, but force navigation if something blocks
+        try{
+            var v = document.getElementById('buscar').value || '';
+            var path = window.location.pathname;
+            var qs = v ? ('?q=' + encodeURIComponent(v)) : '';
+            // navigate explicitly
+            window.location.href = path + qs;
+            e.preventDefault();
+        }catch(err){
+            // fallback to default submit
+        }
+    });
+})();
+</script>
+}
 
 <div class="row g-3">
 @foreach (var s in Model)

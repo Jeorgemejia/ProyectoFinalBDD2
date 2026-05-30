@@ -68,7 +68,15 @@ namespace BancaCore.Controllers
         private readonly MonedaRepository _repo;
         public MonedasController(MonedaRepository repo) { _repo = repo; }
 
-        public async Task<IActionResult> Index() => View(await _repo.GetAllAsync());
+        public async Task<IActionResult> Index(string q = null)
+        {
+            if (!string.IsNullOrWhiteSpace(q))
+            {
+                ViewBag.Query = q;
+                return View(await _repo.SearchAsync(q));
+            }
+            return View(await _repo.GetAllAsync());
+        }
 
         public IActionResult Crear() => View(new Moneda());
 
@@ -124,7 +132,15 @@ namespace BancaCore.Controllers
         private readonly TipoCuentaRepository _repo;
         public TiposCuentaController(TipoCuentaRepository repo) { _repo = repo; }
 
-        public async Task<IActionResult> Index() => View(await _repo.GetAllAsync());
+        public async Task<IActionResult> Index(string q = null)
+        {
+            if (!string.IsNullOrWhiteSpace(q))
+            {
+                ViewBag.Query = q;
+                return View(await _repo.SearchAsync(q));
+            }
+            return View(await _repo.GetAllAsync());
+        }
         public IActionResult Crear() => View(new TipoCuenta());
 
         [HttpPost]
@@ -179,7 +195,15 @@ namespace BancaCore.Controllers
         private readonly TipoTransaccionRepository _repo;
         public TiposTransaccionController(TipoTransaccionRepository repo) { _repo = repo; }
 
-        public async Task<IActionResult> Index() => View(await _repo.GetAllAsync());
+        public async Task<IActionResult> Index(string q = null)
+        {
+            if (!string.IsNullOrWhiteSpace(q))
+            {
+                ViewBag.Query = q;
+                return View(await _repo.SearchAsync(q));
+            }
+            return View(await _repo.GetAllAsync());
+        }
         public IActionResult Crear() => View(new TipoTransaccion());
 
         [HttpPost]
@@ -671,8 +695,13 @@ namespace BancaCore.Controllers
         public async Task<IActionResult> Editar(Sucursal model)
         {
             if (!ModelState.IsValid) return View(model);
-            await _repo.UpdateAsync(model, User.Identity!.Name!);
-            TempData["OK"] = "Sucursal actualizada.";
+            var (resultado, mensaje) = await _repo.UpdateAsync(model, User.Identity!.Name!);
+            if (!resultado)
+            {
+                ModelState.AddModelError(string.Empty, mensaje);
+                return View(model);
+            }
+            TempData["OK"] = mensaje;
             return RedirectToAction(nameof(Index));
         }
 
@@ -687,8 +716,15 @@ namespace BancaCore.Controllers
         [HttpPost]
         public async Task<IActionResult> Eliminar(int id)
         {
-            await _repo.DeleteAsync(id, User.Identity!.Name!);
-            TempData["OK"] = "Sucursal eliminada.";
+            var (resultado, mensaje) = await _repo.DeleteAsync(id, User.Identity!.Name!);
+            if (!resultado)
+            {
+                var s = await _repo.GetByIdAsync(id);
+                if (s == null) return NotFound();
+                ModelState.AddModelError(string.Empty, mensaje);
+                return View("Eliminar", s);
+            }
+            TempData["OK"] = mensaje;
             return RedirectToAction(nameof(Index));
         }
     }
