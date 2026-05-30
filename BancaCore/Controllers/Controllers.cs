@@ -95,6 +95,7 @@ namespace BancaCore.Controllers
             return RedirectToAction(nameof(Index));
         }
 
+
         public async Task<IActionResult> Editar(int id)
         {
             var m = await _repo.GetByIdAsync(id);
@@ -166,16 +167,16 @@ namespace BancaCore.Controllers
         {
             if (!ModelState.IsValid) return View(model);
 
-                                                                                                                                                        var resultado = await _repo.CreateAsync(model, User.Identity!.Name!);
-            if (resultado <= 0)
-            {
-                ModelState.AddModelError(string.Empty, "No se pudo crear el tipo de cuenta.");
-                return View(model);
-            }
+    var (resultado, mensaje) = await _repo.CreateAsync(model, User.Identity!.Name!);
+    if (!resultado)
+    {
+        ModelState.AddModelError(string.Empty, mensaje);
+        return View(model);
+    }
 
-            TempData["OK"] = "Tipo de cuenta creado.";
-            return RedirectToAction(nameof(Index));
-        }
+    TempData["OK"] = mensaje;
+    return RedirectToAction(nameof(Index));
+}
 
         public async Task<IActionResult> Editar(int id)
         {
@@ -190,14 +191,14 @@ namespace BancaCore.Controllers
         {
             if (!ModelState.IsValid) return View(model);
 
-            var resultado = await _repo.UpdateAsync(model, User.Identity!.Name!);
-            if (resultado <= 0)
+            var (resultado, mensaje) = await _repo.UpdateAsync(model, User.Identity!.Name!);
+            if (!resultado)
             {
-                ModelState.AddModelError(string.Empty, "No se pudo actualizar el tipo de cuenta.");
+                ModelState.AddModelError(string.Empty, mensaje);
                 return View(model);
             }
 
-            TempData["OK"] = "Tipo de cuenta actualizado.";
+            TempData["OK"] = mensaje;
             return RedirectToAction(nameof(Index));
         }
 
@@ -211,15 +212,15 @@ namespace BancaCore.Controllers
         [HttpPost]
         public async Task<IActionResult> Eliminar(int id)
         {
-            var resultado = await _repo.DeleteAsync(id, User.Identity!.Name!);
-            if (resultado <= 0)
+            var (resultado, mensaje) = await _repo.DeleteAsync(id, User.Identity!.Name!);
+            if (!resultado)
             {
                 var t = await _repo.GetByIdAsync(id);
                 if (t == null) return NotFound();
-                ModelState.AddModelError(string.Empty, "No se pudo eliminar el tipo de cuenta.");
+                ModelState.AddModelError(string.Empty, mensaje);
                 return View("Eliminar", t);
             }
-            TempData["OK"] = "Tipo de cuenta eliminado.";
+            TempData["OK"] = mensaje;
             return RedirectToAction(nameof(Index));
         }
     }
@@ -304,15 +305,17 @@ namespace BancaCore.Controllers
         public async Task<IActionResult> Crear(TipoPrestamo model)
         {
             if (!ModelState.IsValid) return View(model);
-            var resultado = await _repo.CreateAsync(model, User.Identity!.Name!);
-            if (resultado <= 0)
-            {
-                ModelState.AddModelError(string.Empty, "No se pudo crear el tipo de préstamo.");
-                return View(model);
-            }
-            TempData["OK"] = "Tipo de préstamo creado.";
-            return RedirectToAction(nameof(Index));
-        }
+
+    var (resultado, mensaje) = await _repo.CreateAsync(model, User.Identity!.Name!);
+    if (!resultado)
+    {
+        ModelState.AddModelError(string.Empty, mensaje);
+        return View(model);
+    }
+
+    TempData["OK"] = mensaje;
+    return RedirectToAction(nameof(Index));
+}
 
         public async Task<IActionResult> Editar(int id)
         {
@@ -326,15 +329,17 @@ namespace BancaCore.Controllers
         public async Task<IActionResult> Editar(TipoPrestamo model)
         {
             if (!ModelState.IsValid) return View(model);
-            var resultado = await _repo.UpdateAsync(model, User.Identity!.Name!);
-            if (resultado <= 0)
-            {
-                ModelState.AddModelError(string.Empty, "No se pudo actualizar el tipo de préstamo.");
-                return View(model);
-            }
-            TempData["OK"] = "Tipo de préstamo actualizado.";
-            return RedirectToAction(nameof(Index));
-        }
+
+    var (resultado, mensaje) = await _repo.UpdateAsync(model, User.Identity!.Name!);
+    if (!resultado)
+    {
+        ModelState.AddModelError(string.Empty, mensaje);
+        return View(model);
+    }
+
+    TempData["OK"] = mensaje;
+    return RedirectToAction(nameof(Index));
+}
 
         public async Task<IActionResult> ConfirmarEliminar(int id)
         {
@@ -346,8 +351,15 @@ namespace BancaCore.Controllers
         [HttpPost]
         public async Task<IActionResult> Eliminar(int id)
         {
-            await _repo.DeleteAsync(id, User.Identity!.Name!);
-            TempData["OK"] = "Tipo de préstamo eliminado.";
+            var (resultado, mensaje) = await _repo.DeleteAsync(id, User.Identity!.Name!);
+            if (!resultado)
+            {
+                var t = await _repo.GetByIdAsync(id);
+                if (t == null) return NotFound();
+                ModelState.AddModelError(string.Empty, mensaje);
+                return View("Eliminar", t);
+            }
+            TempData["OK"] = mensaje;
             return RedirectToAction(nameof(Index));
         }
     }
@@ -369,15 +381,17 @@ namespace BancaCore.Controllers
         public async Task<IActionResult> Crear(TipoTarjeta model)
         {
             if (!ModelState.IsValid) return View(model);
-            var resultado = await _repo.CreateAsync(model, User.Identity!.Name!);
-            if (resultado <= 0)
-            {
-                ModelState.AddModelError(string.Empty, "No se pudo crear el tipo de tarjeta.");
-                return View(model);
-            }
-            TempData["OK"] = "Tipo de tarjeta creado.";
-            return RedirectToAction(nameof(Index));
-        }
+
+    var (resultado, mensaje) = await _repo.CreateAsync(model, User.Identity!.Name!);
+    if (!resultado)
+    {
+        ModelState.AddModelError(string.Empty, mensaje);
+        return View(model);
+    }
+
+    TempData["OK"] = mensaje;
+    return RedirectToAction(nameof(Index));
+}
 
         public async Task<IActionResult> Editar(int id)
         {
@@ -391,15 +405,17 @@ namespace BancaCore.Controllers
         public async Task<IActionResult> Editar(TipoTarjeta model)
         {
             if (!ModelState.IsValid) return View(model);
-            var resultado = await _repo.UpdateAsync(model, User.Identity!.Name!);
-            if (resultado <= 0)
-            {
-                ModelState.AddModelError(string.Empty, "No se pudo actualizar el tipo de tarjeta.");
-                return View(model);
-            }
-            TempData["OK"] = "Tipo de tarjeta actualizado.";
-            return RedirectToAction(nameof(Index));
-        }
+
+    var (resultado, mensaje) = await _repo.UpdateAsync(model, User.Identity!.Name!);
+    if (!resultado)
+    {
+        ModelState.AddModelError(string.Empty, mensaje);
+        return View(model);
+    }
+
+    TempData["OK"] = mensaje;
+    return RedirectToAction(nameof(Index));
+}
 
         public async Task<IActionResult> ConfirmarEliminar(int id)
         {
@@ -411,15 +427,15 @@ namespace BancaCore.Controllers
         [HttpPost]
         public async Task<IActionResult> Eliminar(int id)
         {
-            var resultado = await _repo.DeleteAsync(id, User.Identity!.Name!);
-            if (resultado <= 0)
+            var (resultado, mensaje) = await _repo.DeleteAsync(id, User.Identity!.Name!);
+            if (!resultado)
             {
                 var t = await _repo.GetByIdAsync(id);
                 if (t == null) return NotFound();
-                ModelState.AddModelError(string.Empty, "No se pudo eliminar el tipo de tarjeta.");
+                ModelState.AddModelError(string.Empty, mensaje);
                 return View("Eliminar", t);
             }
-            TempData["OK"] = "Tipo de tarjeta eliminado.";
+            TempData["OK"] = mensaje;
             return RedirectToAction(nameof(Index));
         }
     }
@@ -712,64 +728,49 @@ namespace BancaCore.Controllers
         {
             if (!ModelState.IsValid) return View(model);
 
-            var resultado = await _repo.CreateAsync(model, User.Identity!.Name!);
-            if (resultado <= 0)
-            {
-                ModelState.AddModelError(string.Empty, "No se pudo crear el cliente.");
-                return View(model);
-            }
+    var (resultado, mensaje) = await _repo.CreateAsync(model, User.Identity!.Name!);
+    if (!resultado)
+    {
+        ModelState.AddModelError(string.Empty, mensaje);
+        return View(model);
+    }
 
-            TempData["OK"] = "Cliente creado.";
-            return RedirectToAction(nameof(Index));
-        }
+    TempData["OK"] = mensaje;
+    return RedirectToAction(nameof(Index));
+}
 
-        public async Task<IActionResult> Editar(int id)
-        {
-            var c = await _repo.GetByIdAsync(id);
-            if (c == null) return NotFound();
-            return View(c);
-        }
+[HttpPost]
+[ValidateAntiForgeryToken]
+public async Task<IActionResult> Editar(Cliente model)
+{
+    if (!ModelState.IsValid) return View(model);
 
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Editar(Cliente model)
-        {
-            if (!ModelState.IsValid) return View(model);
+    var (resultado, mensaje) = await _repo.UpdateAsync(model, User.Identity!.Name!);
+    if (!resultado)
+    {
+        ModelState.AddModelError(string.Empty, mensaje);
+        return View(model);
+    }
 
-            var resultado = await _repo.UpdateAsync(model, User.Identity!.Name!);
-            if (resultado <= 0)
-            {
-                ModelState.AddModelError(string.Empty, "No se pudo actualizar el cliente.");
-                return View(model);
-            }
+    TempData["OK"] = mensaje;
+    return RedirectToAction(nameof(Index));
+}
 
-            TempData["OK"] = "Cliente actualizado.";
-            return RedirectToAction(nameof(Index));
-        }
+[HttpPost]
+public async Task<IActionResult> Eliminar(int id)
+{
+    var (resultado, mensaje) = await _repo.DeleteAsync(id, User.Identity!.Name!);
+    if (!resultado)
+    {
+        var c = await _repo.GetByIdAsync(id);
+        if (c == null) return NotFound();
+        ModelState.AddModelError(string.Empty, mensaje);
+        return View("Eliminar", c);
+    }
 
-        // GET: Mostrar vista de confirmación para eliminación
-        public async Task<IActionResult> ConfirmarEliminar(int id)
-        {
-            var c = await _repo.GetByIdAsync(id);
-            if (c == null) return NotFound();
-            return View("Eliminar", c);
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> Eliminar(int id)
-        {
-            var resultado = await _repo.DeleteAsync(id, User.Identity!.Name!);
-            if (resultado <= 0)
-            {
-                var c = await _repo.GetByIdAsync(id);
-                if (c == null) return NotFound();
-                ModelState.AddModelError(string.Empty, "No se pudo eliminar el cliente.");
-                return View("Eliminar", c);
-            }
-
-            TempData["OK"] = "Cliente eliminado.";
-            return RedirectToAction(nameof(Index));
-        }
+    TempData["OK"] = mensaje;
+    return RedirectToAction(nameof(Index));
+}
     }
 }
 
@@ -902,16 +903,16 @@ namespace BancaCore.Controllers
         {
             if (!ModelState.IsValid) { await CargarSelectLists(); return View(model); }
 
-            var resultado = await _repo.UpdateAsync(model, User.Identity!.Name!);
-            if (resultado <= 0)
-            {
-                ModelState.AddModelError(string.Empty, "No se pudo actualizar la cuenta.");
-                await CargarSelectLists();
-                return View(model);
-            }
+    var (resultado, mensaje) = await _repo.UpdateAsync(model, User.Identity!.Name!);
+    if (!resultado)
+    {
+        ModelState.AddModelError(string.Empty, mensaje);
+        await CargarSelectLists();
+        return View(model);
+    }
 
-            TempData["OK"] = "Cuenta actualizada.";
-            return RedirectToAction(nameof(Index));
+    TempData["OK"] = mensaje;
+    return RedirectToAction(nameof(Index));
         }
 
         // GET: Mostrar confirmación para cerrar cuenta
@@ -934,32 +935,32 @@ namespace BancaCore.Controllers
         {
             if (!ModelState.IsValid) { await CargarSelectLists(); return View(model); }
 
-            var resultado = await _repo.CreateAsync(model, User.Identity!.Name!);
-            if (resultado <= 0)
-            {
-                ModelState.AddModelError(string.Empty, "No se pudo crear la cuenta.");
-                await CargarSelectLists();
-                return View(model);
-            }
+    var (resultado, mensaje) = await _repo.CreateAsync(model, User.Identity!.Name!);
+    if (!resultado)
+    {
+        ModelState.AddModelError(string.Empty, mensaje);
+        await CargarSelectLists();
+        return View(model);
+    }
 
-            TempData["OK"] = "Cuenta creada.";
-            return RedirectToAction(nameof(Index));
-        }
+    TempData["OK"] = mensaje;
+    return RedirectToAction(nameof(Index));
+}
 
         // POST Cerrar
         [HttpPost]
         public async Task<IActionResult> Cerrar(int id)
         {
-            var resultado = await _repo.CerrarAsync(id, User.Identity!.Name!);
-            if (resultado <= 0)
+            var (resultado, mensaje) = await _repo.CerrarAsync(id, User.Identity!.Name!);
+            if (!resultado)
             {
                 var c = await _repo.GetByIdAsync(id);
                 if (c == null) return NotFound();
-                ModelState.AddModelError(string.Empty, "No se pudo cerrar la cuenta.");
+                ModelState.AddModelError(string.Empty, mensaje);
                 return View("Eliminar", c);
             }
 
-            TempData["OK"] = "Cuenta cerrada.";
+            TempData["OK"] = mensaje;
             return RedirectToAction(nameof(Index));
         }
 
@@ -1008,19 +1009,17 @@ namespace BancaCore.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Deposito(int cuentaId, decimal monto, int moneda, string descripcion)
         {
-            try
-            {
-                await _repo.DepositarAsync(cuentaId, monto, moneda, descripcion, User.Identity!.Name!);
-                TempData["OK"] = $"Depósito de {monto:N2} realizado exitosamente.";
-                return RedirectToAction(nameof(Index));
-            }
-            catch (Exception ex)
-            {
-                TempData["ERR"] = ex.Message;
-                await CargarCuentas(); await CargarMonedas();
-                return View();
-            }
-        }
+            var (resultado, mensaje) = await _repo.DepositarAsync(cuentaId, monto, moneda, descripcion, User.Identity!.Name!);
+    if (!resultado)
+    {
+        ModelState.AddModelError(string.Empty, mensaje);
+        await CargarCuentas(); await CargarMonedas();
+        return View();
+    }
+
+    TempData["OK"] = mensaje;
+    return RedirectToAction(nameof(Index));
+}
 
         public async Task<IActionResult> Retiro()
         {
@@ -1032,19 +1031,17 @@ namespace BancaCore.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Retiro(int cuentaId, decimal monto, int moneda, string descripcion)
         {
-            try
-            {
-                await _repo.RetirarAsync(cuentaId, monto, moneda, descripcion, User.Identity!.Name!);
-                TempData["OK"] = $"Retiro de {monto:N2} realizado exitosamente.";
-                return RedirectToAction(nameof(Index));
-            }
-            catch (Exception ex)
-            {
-                TempData["ERR"] = ex.Message;
-                await CargarCuentas(); await CargarMonedas();
-                return View();
-            }
-        }
+            var (resultado, mensaje) = await _repo.RetirarAsync(cuentaId, monto, moneda, descripcion, User.Identity!.Name!);
+    if (!resultado)
+    {
+        ModelState.AddModelError(string.Empty, mensaje);
+        await CargarCuentas(); await CargarMonedas();
+        return View();
+    }
+
+    TempData["OK"] = mensaje;
+    return RedirectToAction(nameof(Index));
+}
 
         public async Task<IActionResult> Transferencia()
         {
@@ -1056,19 +1053,17 @@ namespace BancaCore.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Transferencia(int cuentaOrigen, int cuentaDestino, decimal monto, int moneda, string descripcion)
         {
-            try
-            {
-                await _repo.TransferirAsync(cuentaOrigen, cuentaDestino, monto, moneda, descripcion, User.Identity!.Name!);
-                TempData["OK"] = $"Transferencia de {monto:N2} realizada exitosamente.";
-                return RedirectToAction(nameof(Index));
-            }
-            catch (Exception ex)
-            {
-                TempData["ERR"] = ex.Message;
-                await CargarCuentas(); await CargarMonedas();
-                return View();
-            }
-        }
+            var (resultado, mensaje) = await _repo.TransferirAsync(cuentaOrigen, cuentaDestino, monto, moneda, descripcion, User.Identity!.Name!);
+    if (!resultado)
+    {
+        ModelState.AddModelError(string.Empty, mensaje);
+        await CargarCuentas(); await CargarMonedas();
+        return View();
+    }
+
+    TempData["OK"] = mensaje;
+    return RedirectToAction(nameof(Index));
+}
 
         private async Task CargarCuentas()
         {
