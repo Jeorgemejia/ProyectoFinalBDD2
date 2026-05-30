@@ -165,10 +165,16 @@ namespace BancaCore.Controllers
         public async Task<IActionResult> Crear(TipoCuenta model)
         {
             if (!ModelState.IsValid) return View(model);
-            await _repo.CreateAsync(model, User.Identity!.Name!);
-            TempData["OK"] = "Tipo de cuenta creado.";
-            return RedirectToAction(nameof(Index));
 
+            var (resultado, mensaje) = await _repo.CreateAsync(model, User.Identity!.Name!);
+            if (!resultado)
+            {
+                ModelState.AddModelError(string.Empty, mensaje);
+                return View(model);
+            }
+
+            TempData["OK"] = mensaje;
+            return RedirectToAction(nameof(Index));
         }
 
         public async Task<IActionResult> Editar(int id)
@@ -183,8 +189,15 @@ namespace BancaCore.Controllers
         public async Task<IActionResult> Editar(TipoCuenta model)
         {
             if (!ModelState.IsValid) return View(model);
-            await _repo.UpdateAsync(model, User.Identity!.Name!);
-            TempData["OK"] = "Tipo de cuenta actualizado.";
+
+            var (resultado, mensaje) = await _repo.UpdateAsync(model, User.Identity!.Name!);
+            if (!resultado)
+            {
+                ModelState.AddModelError(string.Empty, mensaje);
+                return View(model);
+            }
+
+            TempData["OK"] = mensaje;
             return RedirectToAction(nameof(Index));
         }
 
@@ -198,8 +211,15 @@ namespace BancaCore.Controllers
         [HttpPost]
         public async Task<IActionResult> Eliminar(int id)
         {
-            await _repo.DeleteAsync(id, User.Identity!.Name!);
-            TempData["OK"] = "Tipo de cuenta eliminado.";
+            var (resultado, mensaje) = await _repo.DeleteAsync(id, User.Identity!.Name!);
+            if (!resultado)
+            {
+                var t = await _repo.GetByIdAsync(id);
+                if (t == null) return NotFound();
+                ModelState.AddModelError(string.Empty, mensaje);
+                return View("Eliminar", t);
+            }
+            TempData["OK"] = mensaje;
             return RedirectToAction(nameof(Index));
         }
     }

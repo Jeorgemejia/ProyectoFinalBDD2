@@ -96,7 +96,7 @@ namespace BancaCore.Data.Repositories
         public async Task<IEnumerable<TipoCuenta>> GetAllAsync()
         {
             using var conn = _db.Open();
-            return await conn.QueryAsync<TipoCuenta>("SELECT * FROM tbl_TipoCuenta WHERE Estado=1 ORDER BY Nombre");
+            return await conn.QueryAsync<TipoCuenta>("usp_ConsultarTipoCuenta", commandType: CommandType.StoredProcedure);
         }
 
         public async Task<IEnumerable<TipoCuenta>> SearchAsync(string nombre)
