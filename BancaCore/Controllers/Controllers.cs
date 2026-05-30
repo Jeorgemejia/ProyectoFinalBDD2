@@ -85,8 +85,13 @@ namespace BancaCore.Controllers
         public async Task<IActionResult> Crear(Moneda model)
         {
             if (!ModelState.IsValid) return View(model);
-            await _repo.CreateAsync(model, User.Identity!.Name!);
-            TempData["OK"] = "Moneda creada.";
+            var (resultado, mensaje) = await _repo.CreateAsync(model, User.Identity!.Name!);
+            if (!resultado)
+            {
+                ModelState.AddModelError(string.Empty, mensaje);
+                return View(model);
+            }
+            TempData["OK"] = mensaje;
             return RedirectToAction(nameof(Index));
         }
 
@@ -102,8 +107,13 @@ namespace BancaCore.Controllers
         public async Task<IActionResult> Editar(Moneda model)
         {
             if (!ModelState.IsValid) return View(model);
-            await _repo.UpdateAsync(model, User.Identity!.Name!);
-            TempData["OK"] = "Moneda actualizada.";
+            var (resultado, mensaje) = await _repo.UpdateAsync(model, User.Identity!.Name!);
+            if (!resultado)
+            {
+                ModelState.AddModelError(string.Empty, mensaje);
+                return View(model);
+            }
+            TempData["OK"] = mensaje;
             return RedirectToAction(nameof(Index));
         }
 
@@ -117,8 +127,15 @@ namespace BancaCore.Controllers
         [HttpPost]
         public async Task<IActionResult> Eliminar(int id)
         {
-            await _repo.DeleteAsync(id, User.Identity!.Name!);
-            TempData["OK"] = "Moneda eliminada.";
+            var (resultado, mensaje) = await _repo.DeleteAsync(id, User.Identity!.Name!);
+            if (!resultado)
+            {
+                var m = await _repo.GetByIdAsync(id);
+                if (m == null) return NotFound();
+                ModelState.AddModelError(string.Empty, mensaje);
+                return View("Eliminar", m);
+            }
+            TempData["OK"] = mensaje;
             return RedirectToAction(nameof(Index));
         }
     }
@@ -266,8 +283,13 @@ namespace BancaCore.Controllers
         public async Task<IActionResult> Crear(TipoPrestamo model)
         {
             if (!ModelState.IsValid) return View(model);
-            await _repo.CreateAsync(model, User.Identity!.Name!);
-            TempData["OK"] = "Tipo de préstamo creado.";
+            var (resultado, mensaje) = await _repo.CreateAsync(model, User.Identity!.Name!);
+            if (!resultado)
+            {
+                ModelState.AddModelError(string.Empty, mensaje);
+                return View(model);
+            }
+            TempData["OK"] = mensaje;
             return RedirectToAction(nameof(Index));
         }
 
@@ -283,8 +305,13 @@ namespace BancaCore.Controllers
         public async Task<IActionResult> Editar(TipoPrestamo model)
         {
             if (!ModelState.IsValid) return View(model);
-            await _repo.UpdateAsync(model, User.Identity!.Name!);
-            TempData["OK"] = "Tipo de préstamo actualizado.";
+            var (resultado, mensaje) = await _repo.UpdateAsync(model, User.Identity!.Name!);
+            if (!resultado)
+            {
+                ModelState.AddModelError(string.Empty, mensaje);
+                return View(model);
+            }
+            TempData["OK"] = mensaje;
             return RedirectToAction(nameof(Index));
         }
 
@@ -321,8 +348,13 @@ namespace BancaCore.Controllers
         public async Task<IActionResult> Crear(TipoTarjeta model)
         {
             if (!ModelState.IsValid) return View(model);
-            await _repo.CreateAsync(model, User.Identity!.Name!);
-            TempData["OK"] = "Tipo de tarjeta creado.";
+            var (resultado, mensaje) = await _repo.CreateAsync(model, User.Identity!.Name!);
+            if (!resultado)
+            {
+                ModelState.AddModelError(string.Empty, mensaje);
+                return View(model);
+            }
+            TempData["OK"] = mensaje;
             return RedirectToAction(nameof(Index));
         }
 
@@ -338,8 +370,13 @@ namespace BancaCore.Controllers
         public async Task<IActionResult> Editar(TipoTarjeta model)
         {
             if (!ModelState.IsValid) return View(model);
-            await _repo.UpdateAsync(model, User.Identity!.Name!);
-            TempData["OK"] = "Tipo de tarjeta actualizado.";
+            var (resultado, mensaje) = await _repo.UpdateAsync(model, User.Identity!.Name!);
+            if (!resultado)
+            {
+                ModelState.AddModelError(string.Empty, mensaje);
+                return View(model);
+            }
+            TempData["OK"] = mensaje;
             return RedirectToAction(nameof(Index));
         }
 
@@ -353,8 +390,15 @@ namespace BancaCore.Controllers
         [HttpPost]
         public async Task<IActionResult> Eliminar(int id)
         {
-            await _repo.DeleteAsync(id, User.Identity!.Name!);
-            TempData["OK"] = "Tipo de tarjeta eliminado.";
+            var (resultado, mensaje) = await _repo.DeleteAsync(id, User.Identity!.Name!);
+            if (!resultado)
+            {
+                var t = await _repo.GetByIdAsync(id);
+                if (t == null) return NotFound();
+                ModelState.AddModelError(string.Empty, mensaje);
+                return View("Eliminar", t);
+            }
+            TempData["OK"] = mensaje;
             return RedirectToAction(nameof(Index));
         }
     }
@@ -400,8 +444,15 @@ namespace BancaCore.Controllers
                 ViewBag.Tipos = new SelectList(await _tipos.GetAllAsync(), "CodigoTipoTarjeta", "Nombre");
                 return View(model);
             }
-            await _repo.CreateAsync(model, User.Identity!.Name!);
-            TempData["OK"] = "Tarjeta registrada.";
+            var (resultado, mensaje) = await _repo.CreateAsync(model, User.Identity!.Name!);
+            if (!resultado)
+            {
+                ModelState.AddModelError(string.Empty, mensaje);
+                ViewBag.Cuentas = new SelectList(await _cuentas.GetAllAsync(), "CodigoCuenta", "NumeroCuenta");
+                ViewBag.Tipos = new SelectList(await _tipos.GetAllAsync(), "CodigoTipoTarjeta", "Nombre");
+                return View(model);
+            }
+            TempData["OK"] = mensaje;
             return RedirectToAction(nameof(Index));
         }
 
@@ -424,8 +475,15 @@ namespace BancaCore.Controllers
                 ViewBag.Tipos = new SelectList(await _tipos.GetAllAsync(), "CodigoTipoTarjeta", "Nombre");
                 return View(model);
             }
-            await _repo.UpdateAsync(model, User.Identity!.Name!);
-            TempData["OK"] = "Tarjeta actualizada.";
+            var (resultado, mensaje) = await _repo.UpdateAsync(model, User.Identity!.Name!);
+            if (!resultado)
+            {
+                ModelState.AddModelError(string.Empty, mensaje);
+                ViewBag.Cuentas = new SelectList(await _cuentas.GetAllAsync(), "CodigoCuenta", "NumeroCuenta");
+                ViewBag.Tipos = new SelectList(await _tipos.GetAllAsync(), "CodigoTipoTarjeta", "Nombre");
+                return View(model);
+            }
+            TempData["OK"] = mensaje;
             return RedirectToAction(nameof(Index));
         }
 
@@ -439,8 +497,15 @@ namespace BancaCore.Controllers
         [HttpPost]
         public async Task<IActionResult> Eliminar(int id)
         {
-            await _repo.DeleteAsync(id, User.Identity!.Name!);
-            TempData["OK"] = "Tarjeta eliminada.";
+            var (resultado, mensaje) = await _repo.DeleteAsync(id, User.Identity!.Name!);
+            if (!resultado)
+            {
+                var t = await _repo.GetByIdAsync(id);
+                if (t == null) return NotFound();
+                ModelState.AddModelError(string.Empty, mensaje);
+                return View("Eliminar", t);
+            }
+            TempData["OK"] = mensaje;
             return RedirectToAction(nameof(Index));
         }
     }
@@ -985,8 +1050,14 @@ namespace BancaCore.Controllers
         public async Task<IActionResult> Crear(Prestamo model)
         {
             if (!ModelState.IsValid) { await CargarSelectLists(); return View(model); }
-            await _repo.CreateAsync(model, User.Identity!.Name!);
-            TempData["OK"] = "Préstamo registrado exitosamente.";
+            var (resultado, mensaje) = await _repo.CreateAsync(model, User.Identity!.Name!);
+            if (!resultado)
+            {
+                ModelState.AddModelError(string.Empty, mensaje);
+                await CargarSelectLists();
+                return View(model);
+            }
+            TempData["OK"] = mensaje;
             return RedirectToAction(nameof(Index));
         }
 
@@ -1003,8 +1074,14 @@ namespace BancaCore.Controllers
         public async Task<IActionResult> Editar(Prestamo model)
         {
             if (!ModelState.IsValid) { await CargarSelectLists(); return View(model); }
-            await _repo.UpdateAsync(model, User.Identity!.Name!);
-            TempData["OK"] = "Préstamo actualizado.";
+            var (resultado, mensaje) = await _repo.UpdateAsync(model, User.Identity!.Name!);
+            if (!resultado)
+            {
+                ModelState.AddModelError(string.Empty, mensaje);
+                await CargarSelectLists();
+                return View(model);
+            }
+            TempData["OK"] = mensaje;
             return RedirectToAction(nameof(Index));
         }
 
@@ -1019,8 +1096,15 @@ namespace BancaCore.Controllers
         [HttpPost]
         public async Task<IActionResult> Eliminar(int id)
         {
-            await _repo.DeleteAsync(id, User.Identity!.Name!);
-            TempData["OK"] = "Préstamo eliminado.";
+            var (resultado, mensaje) = await _repo.DeleteAsync(id, User.Identity!.Name!);
+            if (!resultado)
+            {
+                var p = await _repo.GetByIdAsync(id);
+                if (p == null) return NotFound();
+                ModelState.AddModelError(string.Empty, mensaje);
+                return View("Eliminar", p);
+            }
+            TempData["OK"] = mensaje;
             return RedirectToAction(nameof(Index));
         }
 

@@ -4,8 +4,10 @@
 <div class="card" style="max-width:700px">
  <div class="card-body p-4">
   <p>¿Eliminar tipo <strong>@Model.Nombre</strong>?</p>
-  <form asp-action="Eliminar" method="post">@Html.AntiForgeryToken()<input type="hidden" name="id" value="@Model.CodigoTipoPrestamo" />
-  <div class="mt-3"><button class="btn btn-danger">Eliminar</button> <a asp-action="Index" class="btn btn-outline-secondary">Cancelar</a></div>
+  <form asp-action="Eliminar" method="post">@Html.AntiForgeryToken()
+    <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+    <input type="hidden" name="id" value="@Model.CodigoTipoPrestamo" />
+    <div class="mt-3"><button class="btn btn-danger">Eliminar</button> <a asp-action="Index" class="btn btn-outline-secondary">Cancelar</a></div>
   </form>
  </div>
 </div>

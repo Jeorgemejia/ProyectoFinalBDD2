@@ -25,40 +25,66 @@ namespace BancaCore.Data.Repositories
             return await conn.QueryFirstOrDefaultAsync<Moneda>("SELECT * FROM tbl_moneda WHERE CodigoMoneda=@id", new { id });
         }
 
-        public async Task<int> CreateAsync(Moneda m, string usuario)
+        public async Task<(bool Resultado, string Mensaje)> CreateAsync(Moneda m, string usuario)
         {
             using var conn = _db.Open();
-            return await conn.ExecuteScalarAsync<int>(@"
-                INSERT INTO tbl_moneda (Nombre,Simbolo,TipoCambio,Estado,UsuarioCreacion,FechaCreacion)
-                VALUES (@Nombre,@Simbolo,@TipoCambio,1,@usuario,GETDATE());
-                SELECT SCOPE_IDENTITY();",
-                new { m.Nombre, m.Simbolo, m.TipoCambio, usuario });
+            var p = new DynamicParameters();
+            p.Add("Nombre", m.Nombre);
+            p.Add("Simbolo", m.Simbolo);
+            p.Add("TipoCambio", m.TipoCambio);
+            p.Add("UsuarioCreacion", usuario);
+            p.Add("Resultado", dbType: DbType.Boolean, direction: ParameterDirection.Output);
+            p.Add("Mensaje", dbType: DbType.String, size: 500, direction: ParameterDirection.Output);
+
+            await conn.ExecuteAsync("usp_AgregarMoneda", p, commandType: CommandType.StoredProcedure);
+
+            var resultado = p.Get<bool>("Resultado");
+            var mensaje = p.Get<string>("Mensaje");
+            return (resultado, mensaje ?? string.Empty);
         }
 
         public async Task<IEnumerable<Moneda>> SearchAsync(string nombre)
         {
             using var conn = _db.Open();
-            return await conn.QueryAsync<Moneda>("SELECT * FROM tbl_moneda WHERE Nombre LIKE '%' + @nombre + '%' AND Estado=1 ORDER BY Nombre", new { nombre });
+            var p = new DynamicParameters();
+            p.Add("Nombre", nombre);
+            return await conn.QueryAsync<Moneda>("usp_BuscarMoneda", p, commandType: CommandType.StoredProcedure);
         }
 
-        public async Task<bool> UpdateAsync(Moneda m, string usuario)
+        public async Task<(bool Resultado, string Mensaje)> UpdateAsync(Moneda m, string usuario)
         {
             using var conn = _db.Open();
-            var rows = await conn.ExecuteAsync(@"
-                UPDATE tbl_moneda SET Nombre=@Nombre, Simbolo=@Simbolo, TipoCambio=@TipoCambio,
-                  UsuarioModificacion=@usuario, FechaModificacion=GETDATE()
-                WHERE CodigoMoneda=@CodigoMoneda",
-                new { m.Nombre, m.Simbolo, m.TipoCambio, usuario, m.CodigoMoneda });
-            return rows > 0;
+            var p = new DynamicParameters();
+            p.Add("CodigoMoneda", m.CodigoMoneda);
+            p.Add("Nombre", m.Nombre);
+            p.Add("Simbolo", m.Simbolo);
+            p.Add("TipoCambio", m.TipoCambio);
+            p.Add("Estado", m.Estado);
+            p.Add("UsuarioModificacion", usuario);
+            p.Add("Resultado", dbType: DbType.Boolean, direction: ParameterDirection.Output);
+            p.Add("Mensaje", dbType: DbType.String, size: 500, direction: ParameterDirection.Output);
+
+            await conn.ExecuteAsync("usp_EditarMoneda", p, commandType: CommandType.StoredProcedure);
+
+            var resultado = p.Get<bool>("Resultado");
+            var mensaje = p.Get<string>("Mensaje");
+            return (resultado, mensaje ?? string.Empty);
         }
 
-        public async Task<bool> DeleteAsync(int id, string usuario)
+        public async Task<(bool Resultado, string Mensaje)> DeleteAsync(int id, string usuario)
         {
             using var conn = _db.Open();
-            var rows = await conn.ExecuteAsync(@"
-                UPDATE tbl_moneda SET Estado=0, UsuarioEliminacion=@usuario, FechaEliminacion=GETDATE()
-                WHERE CodigoMoneda=@id", new { id, usuario });
-            return rows > 0;
+            var p = new DynamicParameters();
+            p.Add("CodigoMoneda", id);
+            p.Add("UsuarioEliminacion", usuario);
+            p.Add("Resultado", dbType: DbType.Boolean, direction: ParameterDirection.Output);
+            p.Add("Mensaje", dbType: DbType.String, size: 500, direction: ParameterDirection.Output);
+
+            await conn.ExecuteAsync("usp_EliminarMoneda", p, commandType: CommandType.StoredProcedure);
+
+            var resultado = p.Get<bool>("Resultado");
+            var mensaje = p.Get<string>("Mensaje");
+            return (resultado, mensaje ?? string.Empty);
         }
     }
 
@@ -176,7 +202,7 @@ namespace BancaCore.Data.Repositories
         public async Task<IEnumerable<TipoPrestamo>> GetAllAsync()
         {
             using var conn = _db.Open();
-            return await conn.QueryAsync<TipoPrestamo>("SELECT * FROM tbl_TipoPrestamo WHERE Estado=1 ORDER BY Nombre");
+            return await conn.QueryAsync<TipoPrestamo>("usp_ConsultarTipoPrestamo", commandType: CommandType.StoredProcedure);
         }
 
         public async Task<TipoPrestamo?> GetByIdAsync(int id)
@@ -185,33 +211,63 @@ namespace BancaCore.Data.Repositories
             return await conn.QueryFirstOrDefaultAsync<TipoPrestamo>("SELECT * FROM tbl_TipoPrestamo WHERE CodigoTipoPrestamo=@id", new { id });
         }
 
-        public async Task<int> CreateAsync(TipoPrestamo t, string usuario)
+        public async Task<(bool Resultado, string Mensaje)> CreateAsync(TipoPrestamo t, string usuario)
         {
             using var conn = _db.Open();
-            return await conn.ExecuteScalarAsync<int>(@"
-                INSERT INTO tbl_TipoPrestamo (Nombre,TasaInteres,PlazoMaximoMeses,Estado,UsuarioCreacion,FechaCreacion)
-                VALUES (@Nombre,@TasaInteres,@PlazoMaximoMeses,1,@usuario,GETDATE()); SELECT SCOPE_IDENTITY();",
-                new { t.Nombre, t.TasaInteres, t.PlazoMaximoMeses, usuario });
+            var p = new DynamicParameters();
+            p.Add("Nombre", t.Nombre);
+            p.Add("TasaInteres", t.TasaInteres);
+            p.Add("PlazoMaximoMeses", t.PlazoMaximoMeses);
+            p.Add("UsuarioCreacion", usuario);
+            p.Add("Resultado", dbType: DbType.Boolean, direction: ParameterDirection.Output);
+            p.Add("Mensaje", dbType: DbType.String, size: 500, direction: ParameterDirection.Output);
+
+            await conn.ExecuteAsync("usp_AgregarTipoPrestamo", p, commandType: CommandType.StoredProcedure);
+            var resultado = p.Get<bool>("Resultado");
+            var mensaje = p.Get<string>("Mensaje");
+            return (resultado, mensaje ?? string.Empty);
         }
 
-        public async Task<bool> UpdateAsync(TipoPrestamo t, string usuario)
+        public async Task<(bool Resultado, string Mensaje)> UpdateAsync(TipoPrestamo t, string usuario)
         {
             using var conn = _db.Open();
-            var rows = await conn.ExecuteAsync(@"
-                UPDATE tbl_TipoPrestamo SET Nombre=@Nombre, TasaInteres=@TasaInteres, PlazoMaximoMeses=@PlazoMaximoMeses,
-                  UsuarioModificacion=@usuario, FechaModificacion=GETDATE()
-                WHERE CodigoTipoPrestamo=@CodigoTipoPrestamo",
-                new { t.Nombre, t.TasaInteres, t.PlazoMaximoMeses, usuario, t.CodigoTipoPrestamo });
-            return rows > 0;
+            var p = new DynamicParameters();
+            p.Add("CodigoTipoPrestamo", t.CodigoTipoPrestamo);
+            p.Add("Nombre", t.Nombre);
+            p.Add("TasaInteres", t.TasaInteres);
+            p.Add("PlazoMaximoMeses", t.PlazoMaximoMeses);
+            p.Add("Estado", t.Estado);
+            p.Add("UsuarioModificacion", usuario);
+            p.Add("Resultado", dbType: DbType.Boolean, direction: ParameterDirection.Output);
+            p.Add("Mensaje", dbType: DbType.String, size: 500, direction: ParameterDirection.Output);
+
+            await conn.ExecuteAsync("usp_EditarTipoPrestamo", p, commandType: CommandType.StoredProcedure);
+            var resultado = p.Get<bool>("Resultado");
+            var mensaje = p.Get<string>("Mensaje");
+            return (resultado, mensaje ?? string.Empty);
         }
 
-        public async Task<bool> DeleteAsync(int id, string usuario)
+        public async Task<(bool Resultado, string Mensaje)> DeleteAsync(int id, string usuario)
         {
             using var conn = _db.Open();
-            var rows = await conn.ExecuteAsync(@"
-                UPDATE tbl_TipoPrestamo SET Estado=0, UsuarioEliminacion=@usuario, FechaEliminacion=GETDATE()
-                WHERE CodigoTipoPrestamo=@id", new { id, usuario });
-            return rows > 0;
+            var p = new DynamicParameters();
+            p.Add("CodigoTipoPrestamo", id);
+            p.Add("UsuarioEliminacion", usuario);
+            p.Add("Resultado", dbType: DbType.Boolean, direction: ParameterDirection.Output);
+            p.Add("Mensaje", dbType: DbType.String, size: 500, direction: ParameterDirection.Output);
+
+            await conn.ExecuteAsync("usp_EliminarTipoPrestamo", p, commandType: CommandType.StoredProcedure);
+            var resultado = p.Get<bool>("Resultado");
+            var mensaje = p.Get<string>("Mensaje");
+            return (resultado, mensaje ?? string.Empty);
+        }
+
+        public async Task<IEnumerable<TipoPrestamo>> SearchAsync(string nombre)
+        {
+            using var conn = _db.Open();
+            var p = new DynamicParameters();
+            p.Add("Nombre", nombre);
+            return await conn.QueryAsync<TipoPrestamo>("usp_BuscarTipoPrestamo", p, commandType: CommandType.StoredProcedure);
         }
     }
 
@@ -232,32 +288,59 @@ namespace BancaCore.Data.Repositories
             return await conn.QueryFirstOrDefaultAsync<TipoTarjeta>("SELECT * FROM tbl_TipoTarjeta WHERE CodigoTipoTarjeta=@id", new { id });
         }
 
-        public async Task<int> CreateAsync(TipoTarjeta t, string usuario)
+        public async Task<(bool Resultado, string Mensaje)> CreateAsync(TipoTarjeta t, string usuario)
         {
             using var conn = _db.Open();
-            return await conn.ExecuteScalarAsync<int>(@"
-                INSERT INTO tbl_TipoTarjeta (Nombre,Estado,UsuarioCreacion,FechaCreacion)
-                VALUES (@Nombre,1,@usuario,GETDATE()); SELECT SCOPE_IDENTITY();",
-                new { t.Nombre, usuario });
+            var p = new DynamicParameters();
+            p.Add("Nombre", t.Nombre);
+            p.Add("UsuarioCreacion", usuario);
+            p.Add("Resultado", dbType: DbType.Boolean, direction: ParameterDirection.Output);
+            p.Add("Mensaje", dbType: DbType.String, size: 500, direction: ParameterDirection.Output);
+
+            await conn.ExecuteAsync("usp_AgregarTipoTarjeta", p, commandType: CommandType.StoredProcedure);
+            var resultado = p.Get<bool>("Resultado");
+            var mensaje = p.Get<string>("Mensaje");
+            return (resultado, mensaje ?? string.Empty);
         }
 
-        public async Task<bool> UpdateAsync(TipoTarjeta t, string usuario)
+        public async Task<(bool Resultado, string Mensaje)> UpdateAsync(TipoTarjeta t, string usuario)
         {
             using var conn = _db.Open();
-            var rows = await conn.ExecuteAsync(@"
-                UPDATE tbl_TipoTarjeta SET Nombre=@Nombre, UsuarioModificacion=@usuario, FechaModificacion=GETDATE()
-                WHERE CodigoTipoTarjeta=@CodigoTipoTarjeta",
-                new { t.Nombre, usuario, t.CodigoTipoTarjeta });
-            return rows > 0;
+            var p = new DynamicParameters();
+            p.Add("CodigoTipoTarjeta", t.CodigoTipoTarjeta);
+            p.Add("Nombre", t.Nombre);
+            p.Add("Estado", t.Estado);
+            p.Add("UsuarioModificacion", usuario);
+            p.Add("Resultado", dbType: DbType.Boolean, direction: ParameterDirection.Output);
+            p.Add("Mensaje", dbType: DbType.String, size: 500, direction: ParameterDirection.Output);
+
+            await conn.ExecuteAsync("usp_EditarTipoTarjeta", p, commandType: CommandType.StoredProcedure);
+            var resultado = p.Get<bool>("Resultado");
+            var mensaje = p.Get<string>("Mensaje");
+            return (resultado, mensaje ?? string.Empty);
         }
 
-        public async Task<bool> DeleteAsync(int id, string usuario)
+        public async Task<(bool Resultado, string Mensaje)> DeleteAsync(int id, string usuario)
         {
             using var conn = _db.Open();
-            var rows = await conn.ExecuteAsync(@"
-                UPDATE tbl_TipoTarjeta SET Estado=0, UsuarioEliminacion=@usuario, FechaEliminacion=GETDATE()
-                WHERE CodigoTipoTarjeta=@id", new { id, usuario });
-            return rows > 0;
+            var p = new DynamicParameters();
+            p.Add("CodigoTipoTarjeta", id);
+            p.Add("UsuarioEliminacion", usuario);
+            p.Add("Resultado", dbType: DbType.Boolean, direction: ParameterDirection.Output);
+            p.Add("Mensaje", dbType: DbType.String, size: 500, direction: ParameterDirection.Output);
+
+            await conn.ExecuteAsync("usp_EliminarTipoTarjeta", p, commandType: CommandType.StoredProcedure);
+            var resultado = p.Get<bool>("Resultado");
+            var mensaje = p.Get<string>("Mensaje");
+            return (resultado, mensaje ?? string.Empty);
+        }
+
+        public async Task<IEnumerable<TipoTarjeta>> SearchAsync(string nombre)
+        {
+            using var conn = _db.Open();
+            var p = new DynamicParameters();
+            p.Add("Nombre", nombre);
+            return await conn.QueryAsync<TipoTarjeta>("usp_BuscarTipoTarjeta", p, commandType: CommandType.StoredProcedure);
         }
     }
 
@@ -275,7 +358,8 @@ namespace BancaCore.Data.Repositories
         public async Task<IEnumerable<Tarjeta>> GetAllAsync()
         {
             using var conn = _db.Open();
-            return await conn.QueryAsync<Tarjeta>(SelectBase + " WHERE t.Estado=1 ORDER BY t.FechaEmision DESC");
+            // Use stored procedure usp_ConsultarTarjeta
+            return await conn.QueryAsync<Tarjeta>("usp_ConsultarTarjeta", commandType: CommandType.StoredProcedure);
         }
 
         public async Task<Tarjeta?> GetByIdAsync(int id)
@@ -284,34 +368,71 @@ namespace BancaCore.Data.Repositories
             return await conn.QueryFirstOrDefaultAsync<Tarjeta>(SelectBase + " WHERE t.CodigoTarjeta=@id", new { id });
         }
 
-        public async Task<int> CreateAsync(Tarjeta t, string usuario)
+        public async Task<(bool Resultado, string Mensaje)> CreateAsync(Tarjeta t, string usuario)
         {
             using var conn = _db.Open();
-            return await conn.ExecuteScalarAsync<int>(@"
-                INSERT INTO tbl_Tarjeta (NumeroTarjeta,CodigoCuenta,CodigoTipoTarjeta,LimiteCredito,SaldoUtilizado,FechaEmision,FechaVencimiento,Estado,UsuarioCreacion,FechaCreacion)
-                VALUES (@NumeroTarjeta,@CodigoCuenta,@CodigoTipoTarjeta,@LimiteCredito,@SaldoUtilizado,@FechaEmision,@FechaVencimiento,1,@usuario,GETDATE()); SELECT SCOPE_IDENTITY();",
-                new { t.NumeroTarjeta, t.CodigoCuenta, t.CodigoTipoTarjeta, t.LimiteCredito, t.SaldoUtilizado, t.FechaEmision, t.FechaVencimiento, usuario });
+            var p = new DynamicParameters();
+            p.Add("NumeroTarjeta", t.NumeroTarjeta);
+            p.Add("CodigoCuenta", t.CodigoCuenta);
+            p.Add("CodigoTipoTarjeta", t.CodigoTipoTarjeta);
+            p.Add("LimiteCredito", t.LimiteCredito);
+            p.Add("SaldoUtilizado", t.SaldoUtilizado);
+            p.Add("FechaEmision", t.FechaEmision);
+            p.Add("FechaVencimiento", t.FechaVencimiento);
+            p.Add("UsuarioCreacion", usuario);
+            p.Add("Resultado", dbType: DbType.Boolean, direction: ParameterDirection.Output);
+            p.Add("Mensaje", dbType: DbType.String, size: 500, direction: ParameterDirection.Output);
+
+            await conn.ExecuteAsync("usp_AgregarTarjeta", p, commandType: CommandType.StoredProcedure);
+            var resultado = p.Get<bool>("Resultado");
+            var mensaje = p.Get<string>("Mensaje");
+            return (resultado, mensaje ?? string.Empty);
         }
 
-        public async Task<bool> UpdateAsync(Tarjeta t, string usuario)
+        public async Task<(bool Resultado, string Mensaje)> UpdateAsync(Tarjeta t, string usuario)
         {
             using var conn = _db.Open();
-            var rows = await conn.ExecuteAsync(@"
-                UPDATE tbl_Tarjeta SET NumeroTarjeta=@NumeroTarjeta, CodigoCuenta=@CodigoCuenta, CodigoTipoTarjeta=@CodigoTipoTarjeta,
-                  LimiteCredito=@LimiteCredito, SaldoUtilizado=@SaldoUtilizado, FechaEmision=@FechaEmision, FechaVencimiento=@FechaVencimiento,
-                  UsuarioModificacion=@usuario, FechaModificacion=GETDATE()
-                WHERE CodigoTarjeta=@CodigoTarjeta",
-                new { t.NumeroTarjeta, t.CodigoCuenta, t.CodigoTipoTarjeta, t.LimiteCredito, t.SaldoUtilizado, t.FechaEmision, t.FechaVencimiento, usuario, t.CodigoTarjeta });
-            return rows > 0;
+            var p = new DynamicParameters();
+            p.Add("CodigoTarjeta", t.CodigoTarjeta);
+            p.Add("NumeroTarjeta", t.NumeroTarjeta);
+            p.Add("CodigoCuenta", t.CodigoCuenta);
+            p.Add("CodigoTipoTarjeta", t.CodigoTipoTarjeta);
+            p.Add("LimiteCredito", t.LimiteCredito);
+            p.Add("SaldoUtilizado", t.SaldoUtilizado);
+            p.Add("FechaEmision", t.FechaEmision);
+            p.Add("FechaVencimiento", t.FechaVencimiento);
+            p.Add("Estado", t.Estado);
+            p.Add("UsuarioModificacion", usuario);
+            p.Add("Resultado", dbType: DbType.Boolean, direction: ParameterDirection.Output);
+            p.Add("Mensaje", dbType: DbType.String, size: 500, direction: ParameterDirection.Output);
+
+            await conn.ExecuteAsync("usp_EditarTarjeta", p, commandType: CommandType.StoredProcedure);
+            var resultado = p.Get<bool>("Resultado");
+            var mensaje = p.Get<string>("Mensaje");
+            return (resultado, mensaje ?? string.Empty);
         }
 
-        public async Task<bool> DeleteAsync(int id, string usuario)
+        public async Task<(bool Resultado, string Mensaje)> DeleteAsync(int id, string usuario)
         {
             using var conn = _db.Open();
-            var rows = await conn.ExecuteAsync(@"
-                UPDATE tbl_Tarjeta SET Estado=0, UsuarioEliminacion=@usuario, FechaEliminacion=GETDATE()
-                WHERE CodigoTarjeta=@id", new { id, usuario });
-            return rows > 0;
+            var p = new DynamicParameters();
+            p.Add("CodigoTarjeta", id);
+            p.Add("UsuarioEliminacion", usuario);
+            p.Add("Resultado", dbType: DbType.Boolean, direction: ParameterDirection.Output);
+            p.Add("Mensaje", dbType: DbType.String, size: 500, direction: ParameterDirection.Output);
+
+            await conn.ExecuteAsync("usp_EliminarTarjeta", p, commandType: CommandType.StoredProcedure);
+            var resultado = p.Get<bool>("Resultado");
+            var mensaje = p.Get<string>("Mensaje");
+            return (resultado, mensaje ?? string.Empty);
+        }
+
+        public async Task<IEnumerable<Tarjeta>> SearchAsync(string numero)
+        {
+            using var conn = _db.Open();
+            var p = new DynamicParameters();
+            p.Add("NumeroTarjeta", numero);
+            return await conn.QueryAsync<Tarjeta>("usp_BuscarTarjeta", p, commandType: CommandType.StoredProcedure);
         }
     }
 
@@ -850,8 +971,7 @@ namespace BancaCore.Data.Repositories
         public async Task<IEnumerable<Prestamo>> GetAllAsync()
         {
             using var conn = _db.Open();
-            return await conn.QueryAsync<Prestamo>(
-                SelectBase + " WHERE p.Estado=1 ORDER BY p.FechaCreacion DESC");
+            return await conn.QueryAsync<Prestamo>("usp_ConsultarPrestamo", commandType: CommandType.StoredProcedure);
         }
 
         public async Task<Prestamo?> GetByIdAsync(int id)
@@ -861,45 +981,75 @@ namespace BancaCore.Data.Repositories
                 SelectBase + " WHERE p.CodigoPrestamo=@id", new { id });
         }
 
-        public async Task<int> CreateAsync(Prestamo p, string usuario)
+        public async Task<(bool Resultado, string Mensaje)> CreateAsync(Prestamo p, string usuario)
         {
             using var conn = _db.Open();
-            return await conn.ExecuteScalarAsync<int>(@"
-                INSERT INTO tbl_Prestamo
-                  (CodigoCliente,CodigoSucursal,CodigoTipoPrestamo,CodigoMoneda,MontoSolicitado,
-                   TasaInteres,PlazoMeses,FechaDesembolso,SaldoPendiente,Estado,UsuarioCreacion,FechaCreacion)
-                VALUES
-                  (@CodigoCliente,@CodigoSucursal,@CodigoTipoPrestamo,@CodigoMoneda,@MontoSolicitado,
-                   @TasaInteres,@PlazoMeses,@FechaDesembolso,@MontoSolicitado,1,@usuario,GETDATE());
-                SELECT SCOPE_IDENTITY();",
-                new { p.CodigoCliente, p.CodigoSucursal, p.CodigoTipoPrestamo, p.CodigoMoneda,
-                      p.MontoSolicitado, p.TasaInteres, p.PlazoMeses, p.FechaDesembolso, usuario });
+            var par = new DynamicParameters();
+            par.Add("CodigoCliente", p.CodigoCliente);
+            par.Add("CodigoSucursal", p.CodigoSucursal);
+            par.Add("CodigoTipoPrestamo", p.CodigoTipoPrestamo);
+            par.Add("CodigoMoneda", p.CodigoMoneda);
+            par.Add("MontoSolicitado", p.MontoSolicitado);
+            par.Add("TasaInteres", p.TasaInteres);
+            par.Add("PlazoMeses", p.PlazoMeses);
+            par.Add("FechaDesembolso", p.FechaDesembolso);
+            par.Add("SaldoPendiente", p.SaldoPendiente);
+            par.Add("UsuarioCreacion", usuario);
+            par.Add("Resultado", dbType: DbType.Boolean, direction: ParameterDirection.Output);
+            par.Add("Mensaje", dbType: DbType.String, size: 500, direction: ParameterDirection.Output);
+
+            await conn.ExecuteAsync("usp_AgregarPrestamo", par, commandType: CommandType.StoredProcedure);
+            var resultado = par.Get<bool>("Resultado");
+            var mensaje = par.Get<string>("Mensaje");
+            return (resultado, mensaje ?? string.Empty);
         }
 
-        public async Task<bool> UpdateAsync(Prestamo p, string usuario)
+        public async Task<(bool Resultado, string Mensaje)> UpdateAsync(Prestamo p, string usuario)
         {
             using var conn = _db.Open();
-            var rows = await conn.ExecuteAsync(@"
-                UPDATE tbl_Prestamo SET
-                  CodigoCliente=@CodigoCliente, CodigoSucursal=@CodigoSucursal,
-                  CodigoTipoPrestamo=@CodigoTipoPrestamo, CodigoMoneda=@CodigoMoneda,
-                  MontoSolicitado=@MontoSolicitado, TasaInteres=@TasaInteres,
-                  PlazoMeses=@PlazoMeses, FechaDesembolso=@FechaDesembolso,
-                  UsuarioModificacion=@usuario, FechaModificacion=GETDATE()
-                WHERE CodigoPrestamo=@CodigoPrestamo",
-                new { p.CodigoCliente, p.CodigoSucursal, p.CodigoTipoPrestamo, p.CodigoMoneda,
-                      p.MontoSolicitado, p.TasaInteres, p.PlazoMeses, p.FechaDesembolso, usuario, p.CodigoPrestamo });
-            return rows > 0;
+            var par = new DynamicParameters();
+            par.Add("CodigoPrestamo", p.CodigoPrestamo);
+            par.Add("CodigoCliente", p.CodigoCliente);
+            par.Add("CodigoSucursal", p.CodigoSucursal);
+            par.Add("CodigoTipoPrestamo", p.CodigoTipoPrestamo);
+            par.Add("CodigoMoneda", p.CodigoMoneda);
+            par.Add("MontoSolicitado", p.MontoSolicitado);
+            par.Add("TasaInteres", p.TasaInteres);
+            par.Add("PlazoMeses", p.PlazoMeses);
+            par.Add("FechaDesembolso", p.FechaDesembolso);
+            par.Add("SaldoPendiente", p.SaldoPendiente);
+            par.Add("Estado", p.Estado);
+            par.Add("UsuarioModificacion", usuario);
+            par.Add("Resultado", dbType: DbType.Boolean, direction: ParameterDirection.Output);
+            par.Add("Mensaje", dbType: DbType.String, size: 500, direction: ParameterDirection.Output);
+
+            await conn.ExecuteAsync("usp_EditarPrestamo", par, commandType: CommandType.StoredProcedure);
+            var resultado = par.Get<bool>("Resultado");
+            var mensaje = par.Get<string>("Mensaje");
+            return (resultado, mensaje ?? string.Empty);
         }
 
-        public async Task<bool> DeleteAsync(int id, string usuario)
+        public async Task<(bool Resultado, string Mensaje)> DeleteAsync(int id, string usuario)
         {
             using var conn = _db.Open();
-            var rows = await conn.ExecuteAsync(@"
-                UPDATE tbl_Prestamo SET Estado=0,
-                  UsuarioEliminacion=@usuario, FechaEliminacion=GETDATE()
-                WHERE CodigoPrestamo=@id", new { id, usuario });
-            return rows > 0;
+            var par = new DynamicParameters();
+            par.Add("CodigoPrestamo", id);
+            par.Add("UsuarioEliminacion", usuario);
+            par.Add("Resultado", dbType: DbType.Boolean, direction: ParameterDirection.Output);
+            par.Add("Mensaje", dbType: DbType.String, size: 500, direction: ParameterDirection.Output);
+
+            await conn.ExecuteAsync("usp_EliminarPrestamo", par, commandType: CommandType.StoredProcedure);
+            var resultado = par.Get<bool>("Resultado");
+            var mensaje = par.Get<string>("Mensaje");
+            return (resultado, mensaje ?? string.Empty);
+        }
+
+        public async Task<IEnumerable<Prestamo>> SearchAsync(int clienteId)
+        {
+            using var conn = _db.Open();
+            var p = new DynamicParameters();
+            p.Add("CodigoCliente", clienteId);
+            return await conn.QueryAsync<Prestamo>("usp_BuscarPrestamo", p, commandType: CommandType.StoredProcedure);
         }
     }
 }
