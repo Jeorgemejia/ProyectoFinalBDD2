@@ -868,8 +868,16 @@ namespace BancaCore.Controllers
         public async Task<IActionResult> Editar(CuentaBancaria model)
         {
             if (!ModelState.IsValid) { await CargarSelectLists(); return View(model); }
-            await _repo.UpdateAsync(model, User.Identity!.Name!);
-            TempData["OK"] = "Cuenta actualizada.";
+
+            var (resultado, mensaje) = await _repo.UpdateAsync(model, User.Identity!.Name!);
+            if (!resultado)
+            {
+                ModelState.AddModelError(string.Empty, mensaje);
+                await CargarSelectLists();
+                return View(model);
+            }
+
+            TempData["OK"] = mensaje;
             return RedirectToAction(nameof(Index));
         }
 
@@ -892,16 +900,33 @@ namespace BancaCore.Controllers
         public async Task<IActionResult> Crear(CuentaBancaria model)
         {
             if (!ModelState.IsValid) { await CargarSelectLists(); return View(model); }
-            await _repo.CreateAsync(model, User.Identity!.Name!);
-            TempData["OK"] = "Cuenta bancaria creada exitosamente.";
+
+            var (resultado, mensaje) = await _repo.CreateAsync(model, User.Identity!.Name!);
+            if (!resultado)
+            {
+                ModelState.AddModelError(string.Empty, mensaje);
+                await CargarSelectLists();
+                return View(model);
+            }
+
+            TempData["OK"] = mensaje;
             return RedirectToAction(nameof(Index));
         }
 
+        // POST Cerrar
         [HttpPost]
         public async Task<IActionResult> Cerrar(int id)
         {
-            await _repo.CerrarAsync(id, User.Identity!.Name!);
-            TempData["OK"] = "Cuenta cerrada.";
+            var (resultado, mensaje) = await _repo.CerrarAsync(id, User.Identity!.Name!);
+            if (!resultado)
+            {
+                var c = await _repo.GetByIdAsync(id);
+                if (c == null) return NotFound();
+                ModelState.AddModelError(string.Empty, mensaje);
+                return View("Eliminar", c);
+            }
+
+            TempData["OK"] = mensaje;
             return RedirectToAction(nameof(Index));
         }
 
