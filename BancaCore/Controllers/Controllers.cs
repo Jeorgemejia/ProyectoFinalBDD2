@@ -168,6 +168,7 @@ namespace BancaCore.Controllers
             await _repo.CreateAsync(model, User.Identity!.Name!);
             TempData["OK"] = "Tipo de cuenta creado.";
             return RedirectToAction(nameof(Index));
+
         }
 
         public async Task<IActionResult> Editar(int id)
