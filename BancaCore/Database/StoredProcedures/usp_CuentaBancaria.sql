@@ -3,7 +3,6 @@ CREATE PROCEDURE usp_ConsultarCuentaBancaria
 AS
 BEGIN
     BEGIN TRY
-        -- Consulta todos los registros necesarios para devolver la informacion solicitada.
         SELECT *
         FROM tbl_CuentaBancaria
         ORDER BY CodigoCuenta ASC;
