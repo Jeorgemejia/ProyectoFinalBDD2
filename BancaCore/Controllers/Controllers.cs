@@ -867,9 +867,22 @@ namespace BancaCore.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Editar(CuentaBancaria model)
         {
-            if (!ModelState.IsValid) { await CargarSelectLists(); return View(model); }
-            await _repo.UpdateAsync(model, User.Identity!.Name!);
-            TempData["OK"] = "Cuenta actualizada.";
+            if (!ModelState.IsValid)
+            {
+                await CargarSelectLists();
+                return View(model);
+            }
+
+            var (resultado, mensaje) = await _repo.UpdateAsync(model, User.Identity!.Name!);
+
+            if (!resultado)
+            {
+                ModelState.AddModelError(string.Empty, mensaje);
+                await CargarSelectLists();
+                return View(model);
+            }
+
+            TempData["OK"] = mensaje;
             return RedirectToAction(nameof(Index));
         }
 
@@ -891,17 +904,44 @@ namespace BancaCore.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Crear(CuentaBancaria model)
         {
-            if (!ModelState.IsValid) { await CargarSelectLists(); return View(model); }
-            await _repo.CreateAsync(model, User.Identity!.Name!);
-            TempData["OK"] = "Cuenta bancaria creada exitosamente.";
-            return RedirectToAction(nameof(Index));
+            if (!ModelState.IsValid)
+            {
+                await CargarSelectLists();
+                return View(model);
+            }
+            
+            var (codigoCuenta, mensaje) = await _repo.CreateAsync(model, User.Identity!.Name!);
+
+            if (codigoCuenta > 0)
+            {
+                TempData["OK"] = mensaje; // mensaje proveniente del SP en caso de éxito
+                return RedirectToAction(nameof(Index));
+            }
+            else
+            {
+                TempData["ERR"] = mensaje; // mensaje de error desde el SP
+                await CargarSelectLists();
+                return View(model);
+            }
         }
 
         [HttpPost]
         public async Task<IActionResult> Cerrar(int id)
         {
-            await _repo.CerrarAsync(id, User.Identity!.Name!);
-            TempData["OK"] = "Cuenta cerrada.";
+            // Usamos el nuevo DeleteAsync que devuelve Resultado y Mensaje del SP
+            var (resultado, mensaje) = await _repo.DeleteAsync(id, User.Identity!.Name!);
+
+            if (!resultado)
+            {
+                // Mensaje de error devuelto por el SP
+                TempData["ERR"] = mensaje;
+            }
+            else
+            {
+                // Mensaje de éxito exacto devuelto por el SP
+                TempData["OK"] = mensaje;
+            }
+
             return RedirectToAction(nameof(Index));
         }
 

@@ -104,7 +104,7 @@ namespace BancaCore.Models
     {
         public int CodigoCuenta { get; set; }
 
-        [Required] [Display(Name = "Número de Cuenta")]
+        [Display(Name = "Número de Cuenta")]
         public string NumeroCuenta { get; set; } = "";
 
         [Display(Name = "Cliente")]
