@@ -750,14 +750,14 @@ namespace BancaCore.Data.Repositories
         public CuentaRepository(DbContext db) { _db = db; }
 
         private const string SelectBase = @"
-            SELECT c.*, cl.Nombres+' '+cl.Apellidos AS NombreCliente,
-                   s.Nombre AS NombreSucursal, tc.Nombre AS NombreTipoCuenta,
-                   m.Simbolo AS SimboloMoneda
-            FROM tbl_CuentaBancaria c
-            INNER JOIN tbl_Cliente    cl ON c.CodigoCliente    = cl.IdCliente
-            INNER JOIN tbl_Sucursal   s  ON c.CodigoSucursal   = s.CodigoSucursal
-            INNER JOIN tbl_TipoCuenta tc ON c.CodigoTipoCuenta = tc.CodigoTipoCuenta
-            INNER JOIN tbl_moneda     m  ON c.CodigoMoneda     = m.CodigoMoneda";
+                SELECT c.*, cl.Nombres+' '+cl.Apellidos AS NombreCliente,
+                       s.Nombre AS NombreSucursal, tc.Nombre AS NombreTipoCuenta,
+                       m.Simbolo AS SimboloMoneda
+                FROM tbl_CuentaBancaria c
+                INNER JOIN tbl_Cliente    cl ON c.CodigoCliente    = cl.IdCliente
+                INNER JOIN tbl_Sucursal   s  ON c.CodigoSucursal   = s.CodigoSucursal
+                INNER JOIN tbl_TipoCuenta tc ON c.CodigoTipoCuenta = tc.CodigoTipoCuenta
+                INNER JOIN tbl_moneda     m  ON c.CodigoMoneda     = m.CodigoMoneda";
 
         public async Task<IEnumerable<CuentaBancaria>> GetAllAsync()
         {
@@ -805,27 +805,68 @@ namespace BancaCore.Data.Repositories
             return p.Get<int>("CodigoCuentaOutput");
         }
 
-        public async Task<bool> UpdateAsync(CuentaBancaria c, string usuario)
+        // Update mediante stored procedure que devuelve Resultado y Mensaje
+        public async Task<(bool Resultado, string Mensaje)> UpdateAsync(CuentaBancaria c, string usuario)
         {
             using var conn = _db.Open();
-            var rows = await conn.ExecuteAsync(@"
-                UPDATE tbl_CuentaBancaria SET
-                  CodigoCliente=@CodigoCliente, CodigoSucursal=@CodigoSucursal,
-                  CodigoTipoCuenta=@CodigoTipoCuenta, CodigoMoneda=@CodigoMoneda,
-                  UsuarioModificacion=@usuario, FechaModificacion=GETDATE()
-                WHERE CodigoCuenta=@CodigoCuenta",
-                new { c.CodigoCliente, c.CodigoSucursal, c.CodigoTipoCuenta, c.CodigoMoneda, usuario, c.CodigoCuenta });
-            return rows > 0;
+            var p = new DynamicParameters();
+            p.Add("CodigoCuenta", c.CodigoCuenta);
+            p.Add("NumeroCuenta", c.NumeroCuenta);
+            p.Add("CodigoCliente", c.CodigoCliente);
+            p.Add("CodigoSucursal", c.CodigoSucursal);
+            p.Add("CodigoTipoCuenta", c.CodigoTipoCuenta);
+            p.Add("CodigoMoneda", c.CodigoMoneda);
+            p.Add("SaldoActual", c.SaldoActual);
+            p.Add("FechaApertura", c.FechaApertura.Date);
+            p.Add("Estado", c.Estado);
+            p.Add("UsuarioModificacion", usuario);
+            p.Add("Resultado", dbType: DbType.Boolean, direction: ParameterDirection.Output);
+            p.Add("Mensaje", dbType: DbType.String, size: 500, direction: ParameterDirection.Output);
+
+            await conn.ExecuteAsync("usp_EditarCuentaBancaria", p, commandType: CommandType.StoredProcedure);
+
+            var resultado = p.Get<bool>("Resultado");
+            var mensaje = p.Get<string>("Mensaje");
+            return (resultado, mensaje ?? string.Empty);
         }
 
+        // Método antiguo para cierre directo (se conserva por compatibilidad si lo necesitas)
         public async Task<bool> CerrarAsync(int id, string usuario)
         {
             using var conn = _db.Open();
             var rows = await conn.ExecuteAsync(@"
-                UPDATE tbl_CuentaBancaria SET Estado=0,
-                  UsuarioEliminacion=@usuario, FechaEliminacion=GETDATE()
-                WHERE CodigoCuenta=@id", new { id, usuario });
+                    UPDATE tbl_CuentaBancaria SET Estado=0,
+                      UsuarioEliminacion=@usuario, FechaEliminacion=GETDATE()
+                    WHERE CodigoCuenta=@id", new { id, usuario });
             return rows > 0;
+        }
+
+        // Nuevo: llamando al stored procedure usp_EliminarCuentaBancaria y devolviendo Resultado y Mensaje
+        public async Task<(bool Resultado, string Mensaje)> DeleteAsync(int codigoCuenta, string usuario)
+        {
+            using var conn = _db.Open();
+            var p = new DynamicParameters();
+            p.Add("CodigoCuenta", codigoCuenta);
+            p.Add("UsuarioEliminacion", usuario);
+            p.Add("Resultado", dbType: DbType.Boolean, direction: ParameterDirection.Output);
+            p.Add("Mensaje", dbType: DbType.String, size: 500, direction: ParameterDirection.Output);
+
+            await conn.ExecuteAsync("usp_EliminarCuentaBancaria", p, commandType: CommandType.StoredProcedure);
+
+            var resultado = p.Get<bool>("Resultado");
+            var mensaje = p.Get<string>("Mensaje");
+            return (resultado, mensaje ?? string.Empty);
+        }
+
+        // Nuevo: búsqueda usando el stored procedure usp_BuscarCuentaBancaria
+        public async Task<IEnumerable<CuentaBancaria>> SearchAsync(string numeroCuenta)
+        {
+            using var conn = _db.Open();
+            var p = new DynamicParameters();
+            p.Add("NumeroCuenta", numeroCuenta);
+            // El SP devuelve filas de tbl_CuentaBancaria; mapeamos a CuentaBancaria
+            return await conn.QueryAsync<CuentaBancaria>(
+                "usp_BuscarCuentaBancaria", p, commandType: CommandType.StoredProcedure);
         }
     }
 }
