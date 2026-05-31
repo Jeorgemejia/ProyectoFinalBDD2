@@ -783,20 +783,26 @@ namespace BancaCore.Data.Repositories
         public async Task<int> CreateAsync(CuentaBancaria c, string usuario)
         {
             using var conn = _db.Open();
+
+            // Generar número de cuenta como antes
             var seq = await conn.ExecuteScalarAsync<int>(
                 "SELECT ISNULL(MAX(CodigoCuenta),0)+1 FROM tbl_CuentaBancaria");
             c.NumeroCuenta = $"{c.CodigoSucursal:D3}-{c.CodigoTipoCuenta:D2}-{seq:D8}";
 
-            return await conn.ExecuteScalarAsync<int>(@"
-                INSERT INTO tbl_CuentaBancaria
-                  (NumeroCuenta,CodigoCliente,CodigoSucursal,CodigoTipoCuenta,CodigoMoneda,
-                   SaldoActual,FechaApertura,Estado,UsuarioCreacion,FechaCreacion)
-                VALUES
-                  (@NumeroCuenta,@CodigoCliente,@CodigoSucursal,@CodigoTipoCuenta,@CodigoMoneda,
-                   @SaldoActual,@FechaApertura,1,@usuario,GETDATE());
-                SELECT SCOPE_IDENTITY();",
-                new { c.NumeroCuenta, c.CodigoCliente, c.CodigoSucursal, c.CodigoTipoCuenta,
-                      c.CodigoMoneda, c.SaldoActual, c.FechaApertura, usuario });
+            var p = new DynamicParameters();
+            p.Add("NumeroCuenta", c.NumeroCuenta);
+            p.Add("CodigoCliente", c.CodigoCliente);
+            p.Add("CodigoSucursal", c.CodigoSucursal);
+            p.Add("CodigoTipoCuenta", c.CodigoTipoCuenta);
+            p.Add("CodigoMoneda", c.CodigoMoneda);
+            p.Add("SaldoActual", c.SaldoActual);
+            p.Add("FechaApertura", c.FechaApertura.Date);
+            p.Add("UsuarioCreacion", usuario);
+            p.Add("CodigoCuentaOutput", dbType: DbType.Int32, direction: ParameterDirection.Output);
+
+            await conn.ExecuteAsync("usp_AgregarCuentaBancaria", p, commandType: CommandType.StoredProcedure);
+
+            return p.Get<int>("CodigoCuentaOutput");
         }
 
         public async Task<bool> UpdateAsync(CuentaBancaria c, string usuario)
