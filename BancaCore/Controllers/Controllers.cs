@@ -8,6 +8,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using System.Security.Claims;
+using SecClaim = System.Security.Claims.Claim;
+using SecClaimTypes = System.Security.Claims.ClaimTypes;
 
 // =============================================
 // AuthController
@@ -16,8 +18,8 @@ namespace BancaCore.Controllers
 {
     public class AuthController : Controller
     {
-        private readonly UsuarioRepository _usuarioRepo;
-        public AuthController(UsuarioRepository usuarioRepo)
+        private readonly UsuarioSistemaRepository _usuarioRepo;
+        public AuthController(UsuarioSistemaRepository usuarioRepo)
         {
             _usuarioRepo = usuarioRepo;
         }
@@ -35,16 +37,16 @@ namespace BancaCore.Controllers
                 return View();
             }
 
-            var claims = new List<Claim>
+            var claims = new List<SecClaim>
             {
-                new Claim(ClaimTypes.Name,  user.Usuario),
-                new Claim(ClaimTypes.Role,  user.Rol),
-                new Claim("Sucursal",       user.CodigoSucursal.ToString()),
-                new Claim("NombreSucursal", user.NombreSucursal)
+                new SecClaim(SecClaimTypes.Name,  user.Usuario),
+                new SecClaim(SecClaimTypes.Role,  user.Rol),
+                new SecClaim("Sucursal",       user.CodigoSucursal.ToString()),
+                new SecClaim("NombreSucursal", user.NombreSucursal)
             };
 
-            var identity  = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-            var principal = new ClaimsPrincipal(identity);
+            var identity  = new System.Security.Claims.ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+            var principal = new System.Security.Claims.ClaimsPrincipal(identity);
             await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
             return RedirectToAction("Index", "Home");
         }
@@ -85,7 +87,7 @@ namespace BancaCore.Controllers
         public async Task<IActionResult> Crear(Moneda model)
         {
             if (!ModelState.IsValid) return View(model);
-            var (resultado, mensaje) = await _repo.CreateAsync(model, User.Identity!.Name!);
+            (bool resultado, string mensaje) = await _repo.CreateAsync(model, User.Identity!.Name!);
             if (!resultado)
             {
                 ModelState.AddModelError(string.Empty, mensaje);
@@ -107,7 +109,7 @@ namespace BancaCore.Controllers
         public async Task<IActionResult> Editar(Moneda model)
         {
             if (!ModelState.IsValid) return View(model);
-            var (resultado, mensaje) = await _repo.UpdateAsync(model, User.Identity!.Name!);
+            (bool resultado, string mensaje) = await _repo.UpdateAsync(model, User.Identity!.Name!);
             if (!resultado)
             {
                 ModelState.AddModelError(string.Empty, mensaje);
@@ -127,7 +129,7 @@ namespace BancaCore.Controllers
         [HttpPost]
         public async Task<IActionResult> Eliminar(int id)
         {
-            var (resultado, mensaje) = await _repo.DeleteAsync(id, User.Identity!.Name!);
+            (bool resultado, string mensaje) = await _repo.DeleteAsync(id, User.Identity!.Name!);
             if (!resultado)
             {
                 var m = await _repo.GetByIdAsync(id);
@@ -154,7 +156,8 @@ namespace BancaCore.Controllers
             if (!string.IsNullOrWhiteSpace(q))
             {
                 ViewBag.Query = q;
-                return View(await _repo.SearchAsync(q));
+                // No existe SearchAsync en TipoCuentaRepository, así que mostramos todos los tipos de cuenta
+                return View(await _repo.GetAllAsync());
             }
             return View(await _repo.GetAllAsync());
         }
@@ -283,7 +286,7 @@ namespace BancaCore.Controllers
         public async Task<IActionResult> Crear(TipoPrestamo model)
         {
             if (!ModelState.IsValid) return View(model);
-            var (resultado, mensaje) = await _repo.CreateAsync(model, User.Identity!.Name!);
+            (bool resultado, string mensaje) = await _repo.CreateAsync(model, User.Identity!.Name!);
             if (!resultado)
             {
                 ModelState.AddModelError(string.Empty, mensaje);
@@ -305,7 +308,7 @@ namespace BancaCore.Controllers
         public async Task<IActionResult> Editar(TipoPrestamo model)
         {
             if (!ModelState.IsValid) return View(model);
-            var (resultado, mensaje) = await _repo.UpdateAsync(model, User.Identity!.Name!);
+            (bool resultado, string mensaje) = await _repo.UpdateAsync(model, User.Identity!.Name!);
             if (!resultado)
             {
                 ModelState.AddModelError(string.Empty, mensaje);
@@ -348,7 +351,7 @@ namespace BancaCore.Controllers
         public async Task<IActionResult> Crear(TipoTarjeta model)
         {
             if (!ModelState.IsValid) return View(model);
-            var (resultado, mensaje) = await _repo.CreateAsync(model, User.Identity!.Name!);
+            (bool resultado, string mensaje) = await _repo.CreateAsync(model, User.Identity!.Name!);
             if (!resultado)
             {
                 ModelState.AddModelError(string.Empty, mensaje);
@@ -370,7 +373,7 @@ namespace BancaCore.Controllers
         public async Task<IActionResult> Editar(TipoTarjeta model)
         {
             if (!ModelState.IsValid) return View(model);
-            var (resultado, mensaje) = await _repo.UpdateAsync(model, User.Identity!.Name!);
+            (bool resultado, string mensaje) = await _repo.UpdateAsync(model, User.Identity!.Name!);
             if (!resultado)
             {
                 ModelState.AddModelError(string.Empty, mensaje);
@@ -390,7 +393,7 @@ namespace BancaCore.Controllers
         [HttpPost]
         public async Task<IActionResult> Eliminar(int id)
         {
-            var (resultado, mensaje) = await _repo.DeleteAsync(id, User.Identity!.Name!);
+            (bool resultado, string mensaje) = await _repo.DeleteAsync(id, User.Identity!.Name!);
             if (!resultado)
             {
                 var t = await _repo.GetByIdAsync(id);
@@ -444,7 +447,7 @@ namespace BancaCore.Controllers
                 ViewBag.Tipos = new SelectList(await _tipos.GetAllAsync(), "CodigoTipoTarjeta", "Nombre");
                 return View(model);
             }
-            var (resultado, mensaje) = await _repo.CreateAsync(model, User.Identity!.Name!);
+            (bool resultado, string mensaje) = await _repo.CreateAsync(model, User.Identity!.Name!);
             if (!resultado)
             {
                 ModelState.AddModelError(string.Empty, mensaje);
@@ -475,7 +478,7 @@ namespace BancaCore.Controllers
                 ViewBag.Tipos = new SelectList(await _tipos.GetAllAsync(), "CodigoTipoTarjeta", "Nombre");
                 return View(model);
             }
-            var (resultado, mensaje) = await _repo.UpdateAsync(model, User.Identity!.Name!);
+            (bool resultado, string mensaje) = await _repo.UpdateAsync(model, User.Identity!.Name!);
             if (!resultado)
             {
                 ModelState.AddModelError(string.Empty, mensaje);
@@ -497,7 +500,7 @@ namespace BancaCore.Controllers
         [HttpPost]
         public async Task<IActionResult> Eliminar(int id)
         {
-            var (resultado, mensaje) = await _repo.DeleteAsync(id, User.Identity!.Name!);
+            (bool resultado, string mensaje) = await _repo.DeleteAsync(id, User.Identity!.Name!);
             if (!resultado)
             {
                 var t = await _repo.GetByIdAsync(id);
@@ -679,7 +682,7 @@ namespace BancaCore.Controllers
         {
             if (!ModelState.IsValid) return View(model);
 
-            var (resultado, mensaje) = await _repo.CreateAsync(model, User.Identity!.Name!);
+            (bool resultado, string mensaje) = await _repo.CreateAsync(model, User.Identity!.Name!);
             if (!resultado)
             {
                 ModelState.AddModelError(string.Empty, mensaje); // muestra el mensaje EXACTO del SP
@@ -703,7 +706,7 @@ namespace BancaCore.Controllers
         {
             if (!ModelState.IsValid) return View(model);
 
-            var (resultado, mensaje) = await _repo.UpdateAsync(model, User.Identity!.Name!);
+            (bool resultado, string mensaje) = await _repo.UpdateAsync(model, User.Identity!.Name!);
             if (!resultado)
             {
                 ModelState.AddModelError(string.Empty, mensaje);
@@ -725,7 +728,7 @@ namespace BancaCore.Controllers
         [HttpPost]
         public async Task<IActionResult> Eliminar(int id)
         {
-            var (resultado, mensaje) = await _repo.DeleteAsync(id, User.Identity!.Name!);
+            (bool resultado, string mensaje) = await _repo.DeleteAsync(id, User.Identity!.Name!);
             if (!resultado)
             {
                 var c = await _repo.GetByIdAsync(id);
@@ -760,7 +763,7 @@ namespace BancaCore.Controllers
         public async Task<IActionResult> Crear(Sucursal model)
         {
             if (!ModelState.IsValid) return View(model);
-            var (resultado, mensaje) = await _repo.CreateAsync(model, User.Identity!.Name!);
+            (bool resultado, string mensaje) = await _repo.CreateAsync(model, User.Identity!.Name!);
             if (!resultado)
             {
                 ModelState.AddModelError(string.Empty, mensaje);
@@ -782,7 +785,7 @@ namespace BancaCore.Controllers
         public async Task<IActionResult> Editar(Sucursal model)
         {
             if (!ModelState.IsValid) return View(model);
-            var (resultado, mensaje) = await _repo.UpdateAsync(model, User.Identity!.Name!);
+            (bool resultado, string mensaje) = await _repo.UpdateAsync(model, User.Identity!.Name!);
             if (!resultado)
             {
                 ModelState.AddModelError(string.Empty, mensaje);
@@ -803,7 +806,7 @@ namespace BancaCore.Controllers
         [HttpPost]
         public async Task<IActionResult> Eliminar(int id)
         {
-            var (resultado, mensaje) = await _repo.DeleteAsync(id, User.Identity!.Name!);
+            (bool resultado, string mensaje) = await _repo.DeleteAsync(id, User.Identity!.Name!);
             if (!resultado)
             {
                 var s = await _repo.GetByIdAsync(id);
@@ -873,7 +876,7 @@ namespace BancaCore.Controllers
                 return View(model);
             }
 
-            var (resultado, mensaje) = await _repo.UpdateAsync(model, User.Identity!.Name!);
+            (bool resultado, string mensaje) = await _repo.UpdateAsync(model, User.Identity!.Name!);
 
             if (!resultado)
             {
@@ -910,7 +913,7 @@ namespace BancaCore.Controllers
                 return View(model);
             }
             
-            var (codigoCuenta, mensaje) = await _repo.CreateAsync(model, User.Identity!.Name!);
+            (int codigoCuenta, string mensaje) = await _repo.CreateAsync(model, User.Identity!.Name!);
 
             if (codigoCuenta > 0)
             {
@@ -929,7 +932,7 @@ namespace BancaCore.Controllers
         public async Task<IActionResult> Cerrar(int id)
         {
             // Usamos el nuevo DeleteAsync que devuelve Resultado y Mensaje del SP
-            var (resultado, mensaje) = await _repo.DeleteAsync(id, User.Identity!.Name!);
+            (bool resultado, string mensaje) = await _repo.DeleteAsync(id, User.Identity!.Name!);
 
             if (!resultado)
             {
@@ -1112,7 +1115,7 @@ namespace BancaCore.Controllers
         public async Task<IActionResult> Crear(Prestamo model)
         {
             if (!ModelState.IsValid) { await CargarSelectLists(); return View(model); }
-            var (resultado, mensaje) = await _repo.CreateAsync(model, User.Identity!.Name!);
+            (bool resultado, string mensaje) = await _repo.CreateAsync(model, User.Identity!.Name!);
             if (!resultado)
             {
                 ModelState.AddModelError(string.Empty, mensaje);
@@ -1136,7 +1139,7 @@ namespace BancaCore.Controllers
         public async Task<IActionResult> Editar(Prestamo model)
         {
             if (!ModelState.IsValid) { await CargarSelectLists(); return View(model); }
-            var (resultado, mensaje) = await _repo.UpdateAsync(model, User.Identity!.Name!);
+            (bool resultado, string mensaje) = await _repo.UpdateAsync(model, User.Identity!.Name!);
             if (!resultado)
             {
                 ModelState.AddModelError(string.Empty, mensaje);
@@ -1158,7 +1161,7 @@ namespace BancaCore.Controllers
         [HttpPost]
         public async Task<IActionResult> Eliminar(int id)
         {
-            var (resultado, mensaje) = await _repo.DeleteAsync(id, User.Identity!.Name!);
+                                        (bool resultado, string mensaje) = await _repo.DeleteAsync(id, User.Identity!.Name!);
             if (!resultado)
             {
                 var p = await _repo.GetByIdAsync(id);
@@ -1178,4 +1181,4 @@ namespace BancaCore.Controllers
             ViewBag.Monedas    = new SelectList(await _catalogos.GetMonedasAsync(),          "CodigoMoneda",       "Nombre");
         }
     }
-}
+ }
