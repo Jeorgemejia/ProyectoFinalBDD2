@@ -54,6 +54,13 @@
                     <label asp-for="FechaDesembolso" class="form-label fw-semibold"></label>
                     <input asp-for="FechaDesembolso" type="date" class="form-control" />
                 </div>
+                <div class="col-md-3">
+                    <label asp-for="Estado" class="form-label fw-semibold"></label>
+                    <select asp-for="Estado" class="form-select">
+                        <option value="true">Activo</option>
+                        <option value="false">Inactivo</option>
+                    </select>
+                </div>
             </div>
             <div class="mt-4 d-flex gap-2">
                 <button type="submit" class="btn btn-banca"><i class="bi bi-check-lg me-1"></i>Guardar cambios</button>

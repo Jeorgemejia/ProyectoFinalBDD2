@@ -25,6 +25,13 @@
                     <label asp-for="TipoCambio" class="form-label"></label>
                     <input asp-for="TipoCambio" class="form-control" />
                 </div>
+                <div class="col-md-3">
+                    <label asp-for="Estado" class="form-label"></label>
+                    <select asp-for="Estado" class="form-select">
+                        <option value="true">Activo</option>
+                        <option value="false">Inactivo</option>
+                    </select>
+                </div>
             </div>
             <div class="mt-4">
                 <button class="btn btn-banca">Guardar</button>

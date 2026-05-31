@@ -13,11 +13,14 @@
     </div>
     <div class="card-body p-0">
         <table class="table table-hover mb-0">
-            <thead><tr><th>Nombre</th><th></th></tr></thead>
+            <thead><tr><th>Nombre</th><th>Estado</th><th></th></tr></thead>
             <tbody>
             @foreach(var t in Model){
                 <tr>
                     <td>@t.Nombre</td>
+                    <td>
+                        <span class="badge @(t.Estado ? "bg-success" : "bg-secondary")">@(t.Estado ? "Activo" : "Inactivo")</span>
+                    </td>
                     <td>
                         <a asp-action="Editar" asp-route-id="@t.CodigoTipoTarjeta" class="btn btn-sm btn-outline-secondary">Editar</a>
                         <a asp-action="ConfirmarEliminar" asp-route-id="@t.CodigoTipoTarjeta" class="btn btn-sm btn-outline-danger">Eliminar</a>

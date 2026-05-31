@@ -21,6 +21,9 @@
                     <td>@m.Simbolo</td>
                     <td>@m.TipoCambio.ToString("N4")</td>
                     <td>
+                        <span class="badge @(m.Estado ? "bg-success" : "bg-secondary")">@(m.Estado ? "Activo" : "Inactivo")</span>
+                    </td>
+                    <td>
                         <a asp-action="Editar" asp-route-id="@m.CodigoMoneda" class="btn btn-sm btn-outline-secondary me-1">Editar</a>
                         <a asp-action="ConfirmarEliminar" asp-route-id="@m.CodigoMoneda" class="btn btn-sm btn-outline-danger">Eliminar</a>
                     </td>
