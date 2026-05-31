@@ -20,7 +20,11 @@
                     <td>@t.NumeroCuenta</td>
                     <td>@t.NombreTipoTarjeta</td>
                     <td>@t.NombreCliente</td>
+                    <td>@(t.LimiteCredito.HasValue ? t.LimiteCredito.Value.ToString("N2") : "-")</td>
+                    <td>@(t.SaldoUtilizado.HasValue ? t.SaldoUtilizado.Value.ToString("N2") : "-")</td>
+                    <td>@t.FechaEmision.ToString("dd/MM/yyyy")</td>
                     <td>@t.FechaVencimiento.ToString("dd/MM/yyyy")</td>
+                    <td><span class="badge @(t.Estado ? "bg-success" : "bg-secondary")">@(t.Estado ? "Activo" : "Inactivo")</span></td>
                     <td>
                         <a asp-action="Detalle" asp-route-id="@t.CodigoTarjeta" class="btn btn-sm btn-outline-primary me-1">Detalle</a>
                         <a asp-action="Editar" asp-route-id="@t.CodigoTarjeta" class="btn btn-sm btn-outline-secondary me-1">Editar</a>

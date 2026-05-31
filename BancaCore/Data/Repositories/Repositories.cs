@@ -16,7 +16,8 @@ namespace BancaCore.Data.Repositories
         public async Task<IEnumerable<Moneda>> GetAllAsync()
         {
             using var conn = _db.Open();
-            return await conn.QueryAsync<Moneda>("SELECT * FROM tbl_moneda WHERE Estado=1 ORDER BY Nombre");
+            // include function value TipoCambioFunc for demonstration
+            return await conn.QueryAsync<Moneda>("SELECT m.*, dbo.fn_TipoCambioMoneda(m.CodigoMoneda) AS TipoCambioFunc FROM tbl_moneda m WHERE Estado=1 ORDER BY Nombre");
         }
 
         public async Task<Moneda?> GetByIdAsync(int id)
@@ -36,11 +37,17 @@ namespace BancaCore.Data.Repositories
             p.Add("Resultado", dbType: DbType.Boolean, direction: ParameterDirection.Output);
             p.Add("Mensaje", dbType: DbType.String, size: 500, direction: ParameterDirection.Output);
 
-            await conn.ExecuteAsync("usp_AgregarMoneda", p, commandType: CommandType.StoredProcedure);
-
-            var resultado = p.Get<bool>("Resultado");
-            var mensaje = p.Get<string>("Mensaje");
-            return (resultado, mensaje ?? string.Empty);
+            try
+            {
+                await conn.ExecuteAsync("usp_AgregarMoneda", p, commandType: CommandType.StoredProcedure);
+                var resultado = p.Get<bool>("Resultado");
+                var mensaje = p.Get<string>("Mensaje");
+                return (resultado, mensaje ?? string.Empty);
+            }
+            catch (SqlException ex)
+            {
+                return (false, ex.Message);
+            }
         }
 
         public async Task<IEnumerable<Moneda>> SearchAsync(string nombre)
@@ -64,11 +71,17 @@ namespace BancaCore.Data.Repositories
             p.Add("Resultado", dbType: DbType.Boolean, direction: ParameterDirection.Output);
             p.Add("Mensaje", dbType: DbType.String, size: 500, direction: ParameterDirection.Output);
 
-            await conn.ExecuteAsync("usp_EditarMoneda", p, commandType: CommandType.StoredProcedure);
-
-            var resultado = p.Get<bool>("Resultado");
-            var mensaje = p.Get<string>("Mensaje");
-            return (resultado, mensaje ?? string.Empty);
+            try
+            {
+                await conn.ExecuteAsync("usp_EditarMoneda", p, commandType: CommandType.StoredProcedure);
+                var resultado = p.Get<bool>("Resultado");
+                var mensaje = p.Get<string>("Mensaje");
+                return (resultado, mensaje ?? string.Empty);
+            }
+            catch (SqlException ex)
+            {
+                return (false, ex.Message);
+            }
         }
 
         public async Task<(bool Resultado, string Mensaje)> DeleteAsync(int id, string usuario)
@@ -80,11 +93,17 @@ namespace BancaCore.Data.Repositories
             p.Add("Resultado", dbType: DbType.Boolean, direction: ParameterDirection.Output);
             p.Add("Mensaje", dbType: DbType.String, size: 500, direction: ParameterDirection.Output);
 
-            await conn.ExecuteAsync("usp_EliminarMoneda", p, commandType: CommandType.StoredProcedure);
-
-            var resultado = p.Get<bool>("Resultado");
-            var mensaje = p.Get<string>("Mensaje");
-            return (resultado, mensaje ?? string.Empty);
+            try
+            {
+                await conn.ExecuteAsync("usp_EliminarMoneda", p, commandType: CommandType.StoredProcedure);
+                var resultado = p.Get<bool>("Resultado");
+                var mensaje = p.Get<string>("Mensaje");
+                return (resultado, mensaje ?? string.Empty);
+            }
+            catch (SqlException ex)
+            {
+                return (false, ex.Message);
+            }
         }
     }
 
@@ -202,7 +221,8 @@ namespace BancaCore.Data.Repositories
         public async Task<IEnumerable<TipoPrestamo>> GetAllAsync()
         {
             using var conn = _db.Open();
-            return await conn.QueryAsync<TipoPrestamo>("usp_ConsultarTipoPrestamo", commandType: CommandType.StoredProcedure);
+            // include tasa desde función dbo.fn_TasaTipoPrestamo
+            return await conn.QueryAsync<TipoPrestamo>("SELECT tp.*, dbo.fn_TasaTipoPrestamo(tp.CodigoTipoPrestamo) AS TasaDesdeFuncion FROM tbl_TipoPrestamo tp WHERE tp.Estado=1 ORDER BY tp.Nombre");
         }
 
         public async Task<TipoPrestamo?> GetByIdAsync(int id)
@@ -222,10 +242,17 @@ namespace BancaCore.Data.Repositories
             p.Add("Resultado", dbType: DbType.Boolean, direction: ParameterDirection.Output);
             p.Add("Mensaje", dbType: DbType.String, size: 500, direction: ParameterDirection.Output);
 
-            await conn.ExecuteAsync("usp_AgregarTipoPrestamo", p, commandType: CommandType.StoredProcedure);
-            var resultado = p.Get<bool>("Resultado");
-            var mensaje = p.Get<string>("Mensaje");
-            return (resultado, mensaje ?? string.Empty);
+            try
+            {
+                await conn.ExecuteAsync("usp_AgregarTipoPrestamo", p, commandType: CommandType.StoredProcedure);
+                var resultado = p.Get<bool>("Resultado");
+                var mensaje = p.Get<string>("Mensaje");
+                return (resultado, mensaje ?? string.Empty);
+            }
+            catch (SqlException ex)
+            {
+                return (false, ex.Message);
+            }
         }
 
         public async Task<(bool Resultado, string Mensaje)> UpdateAsync(TipoPrestamo t, string usuario)
@@ -241,10 +268,17 @@ namespace BancaCore.Data.Repositories
             p.Add("Resultado", dbType: DbType.Boolean, direction: ParameterDirection.Output);
             p.Add("Mensaje", dbType: DbType.String, size: 500, direction: ParameterDirection.Output);
 
-            await conn.ExecuteAsync("usp_EditarTipoPrestamo", p, commandType: CommandType.StoredProcedure);
-            var resultado = p.Get<bool>("Resultado");
-            var mensaje = p.Get<string>("Mensaje");
-            return (resultado, mensaje ?? string.Empty);
+            try
+            {
+                await conn.ExecuteAsync("usp_EditarTipoPrestamo", p, commandType: CommandType.StoredProcedure);
+                var resultado = p.Get<bool>("Resultado");
+                var mensaje = p.Get<string>("Mensaje");
+                return (resultado, mensaje ?? string.Empty);
+            }
+            catch (SqlException ex)
+            {
+                return (false, ex.Message);
+            }
         }
 
         public async Task<(bool Resultado, string Mensaje)> DeleteAsync(int id, string usuario)
@@ -256,10 +290,17 @@ namespace BancaCore.Data.Repositories
             p.Add("Resultado", dbType: DbType.Boolean, direction: ParameterDirection.Output);
             p.Add("Mensaje", dbType: DbType.String, size: 500, direction: ParameterDirection.Output);
 
-            await conn.ExecuteAsync("usp_EliminarTipoPrestamo", p, commandType: CommandType.StoredProcedure);
-            var resultado = p.Get<bool>("Resultado");
-            var mensaje = p.Get<string>("Mensaje");
-            return (resultado, mensaje ?? string.Empty);
+            try
+            {
+                await conn.ExecuteAsync("usp_EliminarTipoPrestamo", p, commandType: CommandType.StoredProcedure);
+                var resultado = p.Get<bool>("Resultado");
+                var mensaje = p.Get<string>("Mensaje");
+                return (resultado, mensaje ?? string.Empty);
+            }
+            catch (SqlException ex)
+            {
+                return (false, ex.Message);
+            }
         }
 
         public async Task<IEnumerable<TipoPrestamo>> SearchAsync(string nombre)
@@ -279,7 +320,8 @@ namespace BancaCore.Data.Repositories
         public async Task<IEnumerable<TipoTarjeta>> GetAllAsync()
         {
             using var conn = _db.Open();
-            return await conn.QueryAsync<TipoTarjeta>("SELECT * FROM tbl_TipoTarjeta WHERE Estado=1 ORDER BY Nombre");
+            // include nombre desde función dbo.fn_NombreTipoTarjeta
+            return await conn.QueryAsync<TipoTarjeta>("SELECT tt.*, dbo.fn_NombreTipoTarjeta(tt.CodigoTipoTarjeta) AS NombreFunc FROM tbl_TipoTarjeta tt WHERE Estado=1 ORDER BY Nombre");
         }
 
         public async Task<TipoTarjeta?> GetByIdAsync(int id)
@@ -297,10 +339,17 @@ namespace BancaCore.Data.Repositories
             p.Add("Resultado", dbType: DbType.Boolean, direction: ParameterDirection.Output);
             p.Add("Mensaje", dbType: DbType.String, size: 500, direction: ParameterDirection.Output);
 
-            await conn.ExecuteAsync("usp_AgregarTipoTarjeta", p, commandType: CommandType.StoredProcedure);
-            var resultado = p.Get<bool>("Resultado");
-            var mensaje = p.Get<string>("Mensaje");
-            return (resultado, mensaje ?? string.Empty);
+            try
+            {
+                await conn.ExecuteAsync("usp_AgregarTipoTarjeta", p, commandType: CommandType.StoredProcedure);
+                var resultado = p.Get<bool>("Resultado");
+                var mensaje = p.Get<string>("Mensaje");
+                return (resultado, mensaje ?? string.Empty);
+            }
+            catch (SqlException ex)
+            {
+                return (false, ex.Message);
+            }
         }
 
         public async Task<(bool Resultado, string Mensaje)> UpdateAsync(TipoTarjeta t, string usuario)
@@ -314,10 +363,17 @@ namespace BancaCore.Data.Repositories
             p.Add("Resultado", dbType: DbType.Boolean, direction: ParameterDirection.Output);
             p.Add("Mensaje", dbType: DbType.String, size: 500, direction: ParameterDirection.Output);
 
-            await conn.ExecuteAsync("usp_EditarTipoTarjeta", p, commandType: CommandType.StoredProcedure);
-            var resultado = p.Get<bool>("Resultado");
-            var mensaje = p.Get<string>("Mensaje");
-            return (resultado, mensaje ?? string.Empty);
+            try
+            {
+                await conn.ExecuteAsync("usp_EditarTipoTarjeta", p, commandType: CommandType.StoredProcedure);
+                var resultado = p.Get<bool>("Resultado");
+                var mensaje = p.Get<string>("Mensaje");
+                return (resultado, mensaje ?? string.Empty);
+            }
+            catch (SqlException ex)
+            {
+                return (false, ex.Message);
+            }
         }
 
         public async Task<(bool Resultado, string Mensaje)> DeleteAsync(int id, string usuario)
@@ -329,10 +385,17 @@ namespace BancaCore.Data.Repositories
             p.Add("Resultado", dbType: DbType.Boolean, direction: ParameterDirection.Output);
             p.Add("Mensaje", dbType: DbType.String, size: 500, direction: ParameterDirection.Output);
 
-            await conn.ExecuteAsync("usp_EliminarTipoTarjeta", p, commandType: CommandType.StoredProcedure);
-            var resultado = p.Get<bool>("Resultado");
-            var mensaje = p.Get<string>("Mensaje");
-            return (resultado, mensaje ?? string.Empty);
+            try
+            {
+                await conn.ExecuteAsync("usp_EliminarTipoTarjeta", p, commandType: CommandType.StoredProcedure);
+                var resultado = p.Get<bool>("Resultado");
+                var mensaje = p.Get<string>("Mensaje");
+                return (resultado, mensaje ?? string.Empty);
+            }
+            catch (SqlException ex)
+            {
+                return (false, ex.Message);
+            }
         }
 
         public async Task<IEnumerable<TipoTarjeta>> SearchAsync(string nombre)
@@ -349,7 +412,10 @@ namespace BancaCore.Data.Repositories
         private readonly DbContext _db;
         public TarjetaRepository(DbContext db) { _db = db; }
 
-        private const string SelectBase = @"SELECT t.*, c.NumeroCuenta, tt.Nombre AS NombreTipoTarjeta, cl.Nombres+' '+cl.Apellidos AS NombreCliente
+        private const string SelectBase = @"SELECT t.*, c.NumeroCuenta,
+                   tt.Nombre AS NombreTipoTarjeta, cl.Nombres+' '+cl.Apellidos AS NombreCliente,
+                   dbo.fn_NombreTipoTarjeta(t.CodigoTipoTarjeta) AS NombreTipoTarjetaFunc,
+                   dbo.fn_DisponibleTarjeta(t.CodigoTarjeta) AS Disponible
             FROM tbl_Tarjeta t
             INNER JOIN tbl_CuentaBancaria c ON t.CodigoCuenta = c.CodigoCuenta
             INNER JOIN tbl_TipoTarjeta tt ON t.CodigoTipoTarjeta = tt.CodigoTipoTarjeta
@@ -358,8 +424,8 @@ namespace BancaCore.Data.Repositories
         public async Task<IEnumerable<Tarjeta>> GetAllAsync()
         {
             using var conn = _db.Open();
-            // Use stored procedure usp_ConsultarTarjeta
-            return await conn.QueryAsync<Tarjeta>("usp_ConsultarTarjeta", commandType: CommandType.StoredProcedure);
+            // Use SelectBase which includes function values NombreTipoTarjetaFunc and Disponible
+            return await conn.QueryAsync<Tarjeta>(SelectBase + " ORDER BY t.CodigoTarjeta");
         }
 
         public async Task<Tarjeta?> GetByIdAsync(int id)
@@ -383,10 +449,17 @@ namespace BancaCore.Data.Repositories
             p.Add("Resultado", dbType: DbType.Boolean, direction: ParameterDirection.Output);
             p.Add("Mensaje", dbType: DbType.String, size: 500, direction: ParameterDirection.Output);
 
-            await conn.ExecuteAsync("usp_AgregarTarjeta", p, commandType: CommandType.StoredProcedure);
-            var resultado = p.Get<bool>("Resultado");
-            var mensaje = p.Get<string>("Mensaje");
-            return (resultado, mensaje ?? string.Empty);
+            try
+            {
+                await conn.ExecuteAsync("usp_AgregarTarjeta", p, commandType: CommandType.StoredProcedure);
+                var resultado = p.Get<bool>("Resultado");
+                var mensaje = p.Get<string>("Mensaje");
+                return (resultado, mensaje ?? string.Empty);
+            }
+            catch (SqlException ex)
+            {
+                return (false, ex.Message);
+            }
         }
 
         public async Task<(bool Resultado, string Mensaje)> UpdateAsync(Tarjeta t, string usuario)
@@ -406,10 +479,17 @@ namespace BancaCore.Data.Repositories
             p.Add("Resultado", dbType: DbType.Boolean, direction: ParameterDirection.Output);
             p.Add("Mensaje", dbType: DbType.String, size: 500, direction: ParameterDirection.Output);
 
-            await conn.ExecuteAsync("usp_EditarTarjeta", p, commandType: CommandType.StoredProcedure);
-            var resultado = p.Get<bool>("Resultado");
-            var mensaje = p.Get<string>("Mensaje");
-            return (resultado, mensaje ?? string.Empty);
+            try
+            {
+                await conn.ExecuteAsync("usp_EditarTarjeta", p, commandType: CommandType.StoredProcedure);
+                var resultado = p.Get<bool>("Resultado");
+                var mensaje = p.Get<string>("Mensaje");
+                return (resultado, mensaje ?? string.Empty);
+            }
+            catch (SqlException ex)
+            {
+                return (false, ex.Message);
+            }
         }
 
         public async Task<(bool Resultado, string Mensaje)> DeleteAsync(int id, string usuario)
@@ -421,10 +501,17 @@ namespace BancaCore.Data.Repositories
             p.Add("Resultado", dbType: DbType.Boolean, direction: ParameterDirection.Output);
             p.Add("Mensaje", dbType: DbType.String, size: 500, direction: ParameterDirection.Output);
 
-            await conn.ExecuteAsync("usp_EliminarTarjeta", p, commandType: CommandType.StoredProcedure);
-            var resultado = p.Get<bool>("Resultado");
-            var mensaje = p.Get<string>("Mensaje");
-            return (resultado, mensaje ?? string.Empty);
+            try
+            {
+                await conn.ExecuteAsync("usp_EliminarTarjeta", p, commandType: CommandType.StoredProcedure);
+                var resultado = p.Get<bool>("Resultado");
+                var mensaje = p.Get<string>("Mensaje");
+                return (resultado, mensaje ?? string.Empty);
+            }
+            catch (SqlException ex)
+            {
+                return (false, ex.Message);
+            }
         }
 
         public async Task<IEnumerable<Tarjeta>> SearchAsync(string numero)
@@ -621,9 +708,9 @@ namespace BancaCore.Data.Repositories
         public async Task<IEnumerable<Sucursal>> GetAllAsync()
         {
             using var conn = _db.Open();
-            // Use stored procedure usp_ConsultarSucursal to fetch branches
+            // Use function dbo.fn_NombreSucursal to demonstrate scalar function integration
             return await conn.QueryAsync<Sucursal>(
-                "usp_ConsultarSucursal", commandType: System.Data.CommandType.StoredProcedure);
+                "SELECT s.*, dbo.fn_NombreSucursal(s.CodigoSucursal) AS NombreFunc FROM tbl_Sucursal s WHERE s.Estado=1 ORDER BY s.Nombre");
         }
 
         public async Task<IEnumerable<Sucursal>> SearchAsync(string nombre)
@@ -652,11 +739,17 @@ namespace BancaCore.Data.Repositories
             p.Add("Resultado", dbType: DbType.Boolean, direction: ParameterDirection.Output);
             p.Add("Mensaje", dbType: DbType.String, size: 500, direction: ParameterDirection.Output);
 
-            await conn.ExecuteAsync("usp_AgregarSucursal", p, commandType: CommandType.StoredProcedure);
-
-            var resultado = p.Get<bool>("Resultado");
-            var mensaje = p.Get<string>("Mensaje");
-            return (resultado, mensaje ?? "");
+            try
+            {
+                await conn.ExecuteAsync("usp_AgregarSucursal", p, commandType: CommandType.StoredProcedure);
+                var resultado = p.Get<bool>("Resultado");
+                var mensaje = p.Get<string>("Mensaje");
+                return (resultado, mensaje ?? "");
+            }
+            catch (SqlException ex)
+            {
+                return (false, ex.Message);
+            }
         }
 
         public async Task<(bool Resultado, string Mensaje)> UpdateAsync(Sucursal s, string usuario)
@@ -672,11 +765,17 @@ namespace BancaCore.Data.Repositories
             p.Add("Resultado", dbType: System.Data.DbType.Boolean, direction: System.Data.ParameterDirection.Output);
             p.Add("Mensaje", dbType: System.Data.DbType.String, size: 500, direction: System.Data.ParameterDirection.Output);
 
-            await conn.ExecuteAsync("usp_EditarSucursal", p, commandType: System.Data.CommandType.StoredProcedure);
-
-            var resultado = p.Get<bool>("Resultado");
-            var mensaje = p.Get<string>("Mensaje");
-            return (resultado, mensaje ?? string.Empty);
+            try
+            {
+                await conn.ExecuteAsync("usp_EditarSucursal", p, commandType: System.Data.CommandType.StoredProcedure);
+                var resultado = p.Get<bool>("Resultado");
+                var mensaje = p.Get<string>("Mensaje");
+                return (resultado, mensaje ?? string.Empty);
+            }
+            catch (SqlException ex)
+            {
+                return (false, ex.Message);
+            }
         }
 
         public async Task<(bool Resultado, string Mensaje)> DeleteAsync(int id, string usuario)
@@ -688,11 +787,17 @@ namespace BancaCore.Data.Repositories
             p.Add("Resultado", dbType: System.Data.DbType.Boolean, direction: System.Data.ParameterDirection.Output);
             p.Add("Mensaje", dbType: System.Data.DbType.String, size: 500, direction: System.Data.ParameterDirection.Output);
 
-            await conn.ExecuteAsync("usp_EliminarSucursal", p, commandType: System.Data.CommandType.StoredProcedure);
-
-            var resultado = p.Get<bool>("Resultado");
-            var mensaje = p.Get<string>("Mensaje");
-            return (resultado, mensaje ?? string.Empty);
+            try
+            {
+                await conn.ExecuteAsync("usp_EliminarSucursal", p, commandType: System.Data.CommandType.StoredProcedure);
+                var resultado = p.Get<bool>("Resultado");
+                var mensaje = p.Get<string>("Mensaje");
+                return (resultado, mensaje ?? string.Empty);
+            }
+            catch (SqlException ex)
+            {
+                return (false, ex.Message);
+            }
         }
     }
 }
@@ -710,7 +815,7 @@ namespace BancaCore.Data.Repositories
         public async Task<IEnumerable<Moneda>> GetMonedasAsync()
         {
             using var conn = _db.Open();
-            return await conn.QueryAsync<Moneda>("SELECT * FROM tbl_moneda WHERE Estado=1");
+            return await conn.QueryAsync<Moneda>("SELECT m.*, dbo.fn_TipoCambioMoneda(m.CodigoMoneda) AS TipoCambioFunc FROM tbl_moneda m WHERE Estado=1");
         }
 
         public async Task<IEnumerable<TipoCuenta>> GetTiposCuentaAsync()
@@ -722,13 +827,13 @@ namespace BancaCore.Data.Repositories
         public async Task<IEnumerable<TipoTarjeta>> GetTiposTarjetaAsync()
         {
             using var conn = _db.Open();
-            return await conn.QueryAsync<TipoTarjeta>("SELECT * FROM tbl_TipoTarjeta WHERE Estado=1");
+            return await conn.QueryAsync<TipoTarjeta>("SELECT tt.*, dbo.fn_NombreTipoTarjeta(tt.CodigoTipoTarjeta) AS NombreFunc FROM tbl_TipoTarjeta tt WHERE Estado=1");
         }
 
         public async Task<IEnumerable<TipoPrestamo>> GetTiposPrestamoAsync()
         {
             using var conn = _db.Open();
-            return await conn.QueryAsync<TipoPrestamo>("SELECT * FROM tbl_TipoPrestamo WHERE Estado=1");
+            return await conn.QueryAsync<TipoPrestamo>("SELECT tp.*, dbo.fn_TasaTipoPrestamo(tp.CodigoTipoPrestamo) AS TasaDesdeFuncion FROM tbl_TipoPrestamo tp WHERE Estado=1");
         }
 
         public async Task<IEnumerable<TipoTransaccion>> GetTiposTransaccionAsync()
@@ -984,19 +1089,25 @@ namespace BancaCore.Data.Repositories
         private readonly DbContext _db;
         public PrestamoRepository(DbContext db) { _db = db; }
 
-        private const string SelectBase = @"
+        private static readonly string SelectBase = @"
             SELECT p.*, cl.Nombres+' '+cl.Apellidos AS NombreCliente,
                    tp.Nombre AS NombreTipoPrestamo,
-                   m.Nombre AS NombreMoneda, m.Simbolo AS SimboloMoneda
+                   m.Nombre AS NombreMoneda, m.Simbolo AS SimboloMoneda,
+                   s.Nombre AS NombreSucursal,
+                   dbo.fn_CuotaPrestamo(p.CodigoPrestamo) AS CuotaPrestamo,
+                   dbo.fn_TasaTipoPrestamo(p.CodigoTipoPrestamo) AS TasaDesdeFuncion,
+                   dbo.fn_NombreSucursal(p.CodigoSucursal) AS NombreSucursalFunc
             FROM tbl_Prestamo p
             INNER JOIN tbl_Cliente      cl ON p.CodigoCliente      = cl.IdCliente
             INNER JOIN tbl_TipoPrestamo tp ON p.CodigoTipoPrestamo = tp.CodigoTipoPrestamo
-            INNER JOIN tbl_moneda       m  ON p.CodigoMoneda       = m.CodigoMoneda";
+            INNER JOIN tbl_moneda       m  ON p.CodigoMoneda       = m.CodigoMoneda
+            INNER JOIN tbl_Sucursal     s  ON p.CodigoSucursal     = s.CodigoSucursal";
 
         public async Task<IEnumerable<Prestamo>> GetAllAsync()
         {
             using var conn = _db.Open();
-            return await conn.QueryAsync<Prestamo>("usp_ConsultarPrestamo", commandType: CommandType.StoredProcedure);
+            // Use SelectBase to include computed fields from DB functions
+            return await conn.QueryAsync<Prestamo>(SelectBase + " ORDER BY p.CodigoPrestamo");
         }
 
         public async Task<Prestamo?> GetByIdAsync(int id)
@@ -1023,10 +1134,17 @@ namespace BancaCore.Data.Repositories
             par.Add("Resultado", dbType: DbType.Boolean, direction: ParameterDirection.Output);
             par.Add("Mensaje", dbType: DbType.String, size: 500, direction: ParameterDirection.Output);
 
-            await conn.ExecuteAsync("usp_AgregarPrestamo", par, commandType: CommandType.StoredProcedure);
-            var resultado = par.Get<bool>("Resultado");
-            var mensaje = par.Get<string>("Mensaje");
-            return (resultado, mensaje ?? string.Empty);
+            try
+            {
+                await conn.ExecuteAsync("usp_AgregarPrestamo", par, commandType: CommandType.StoredProcedure);
+                var resultado = par.Get<bool>("Resultado");
+                var mensaje = par.Get<string>("Mensaje");
+                return (resultado, mensaje ?? string.Empty);
+            }
+            catch (SqlException ex)
+            {
+                return (false, ex.Message);
+            }
         }
 
         public async Task<(bool Resultado, string Mensaje)> UpdateAsync(Prestamo p, string usuario)
@@ -1048,10 +1166,17 @@ namespace BancaCore.Data.Repositories
             par.Add("Resultado", dbType: DbType.Boolean, direction: ParameterDirection.Output);
             par.Add("Mensaje", dbType: DbType.String, size: 500, direction: ParameterDirection.Output);
 
-            await conn.ExecuteAsync("usp_EditarPrestamo", par, commandType: CommandType.StoredProcedure);
-            var resultado = par.Get<bool>("Resultado");
-            var mensaje = par.Get<string>("Mensaje");
-            return (resultado, mensaje ?? string.Empty);
+            try
+            {
+                await conn.ExecuteAsync("usp_EditarPrestamo", par, commandType: CommandType.StoredProcedure);
+                var resultado = par.Get<bool>("Resultado");
+                var mensaje = par.Get<string>("Mensaje");
+                return (resultado, mensaje ?? string.Empty);
+            }
+            catch (SqlException ex)
+            {
+                return (false, ex.Message);
+            }
         }
 
         public async Task<(bool Resultado, string Mensaje)> DeleteAsync(int id, string usuario)
@@ -1063,10 +1188,17 @@ namespace BancaCore.Data.Repositories
             par.Add("Resultado", dbType: DbType.Boolean, direction: ParameterDirection.Output);
             par.Add("Mensaje", dbType: DbType.String, size: 500, direction: ParameterDirection.Output);
 
-            await conn.ExecuteAsync("usp_EliminarPrestamo", par, commandType: CommandType.StoredProcedure);
-            var resultado = par.Get<bool>("Resultado");
-            var mensaje = par.Get<string>("Mensaje");
-            return (resultado, mensaje ?? string.Empty);
+            try
+            {
+                await conn.ExecuteAsync("usp_EliminarPrestamo", par, commandType: CommandType.StoredProcedure);
+                var resultado = par.Get<bool>("Resultado");
+                var mensaje = par.Get<string>("Mensaje");
+                return (resultado, mensaje ?? string.Empty);
+            }
+            catch (SqlException ex)
+            {
+                return (false, ex.Message);
+            }
         }
 
         public async Task<IEnumerable<Prestamo>> SearchAsync(int clienteId)

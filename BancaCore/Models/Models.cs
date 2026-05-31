@@ -34,7 +34,9 @@ namespace BancaCore.Models
         public string Direccion { get; set; } = "";
 
         public bool Estado { get; set; } = true;
+        [ScaffoldColumn(false)]
         public string? UsuarioCreacion { get; set; }
+        [ScaffoldColumn(false)]
         public DateTime? FechaCreacion { get; set; }
         public string? UsuarioModificacion { get; set; }
         public DateTime? FechaModificacion { get; set; }
@@ -56,8 +58,12 @@ namespace BancaCore.Models
         public string Telefono { get; set; } = "";
 
         public bool Estado { get; set; } = true;
+        [ScaffoldColumn(false)]
         public string? UsuarioCreacion { get; set; }
+        [ScaffoldColumn(false)]
         public DateTime? FechaCreacion { get; set; }
+        // Función integrada: nombre obtenido mediante dbo.fn_NombreSucursal
+        public string NombreFunc { get; set; } = "";
     }
 
     public class Moneda
@@ -74,6 +80,8 @@ namespace BancaCore.Models
         public decimal TipoCambio { get; set; }
 
         public bool Estado { get; set; } = true;
+        // Tipo de cambio obtenido mediante función dbo.fn_TipoCambioMoneda
+        public decimal TipoCambioFunc { get; set; }
     }
 
     public class TipoCuenta
@@ -118,7 +126,9 @@ namespace BancaCore.Models
         public DateTime FechaApertura { get; set; }
 
         public bool Estado { get; set; } = true;
+        [ScaffoldColumn(false)]
         public string? UsuarioCreacion { get; set; }
+        [ScaffoldColumn(false)]
         public DateTime? FechaCreacion { get; set; }
 
         // Navegación (join)
@@ -133,6 +143,8 @@ namespace BancaCore.Models
         public int CodigoTipoTarjeta { get; set; }
         public string Nombre { get; set; } = "";
         public bool Estado { get; set; } = true;
+        // Nombre obtenido mediante función dbo.fn_NombreTipoTarjeta
+        public string NombreFunc { get; set; } = "";
     }
 
     public class Tarjeta
@@ -164,6 +176,10 @@ namespace BancaCore.Models
         public string NumeroCuenta { get; set; } = "";
         public string NombreTipoTarjeta { get; set; } = "";
         public string NombreCliente { get; set; } = "";
+        // Disponible calculado mediante dbo.fn_DisponibleTarjeta
+        public decimal Disponible { get; set; }
+        // Nombre tipo tarjeta desde función
+        public string NombreTipoTarjetaFunc { get; set; } = "";
     }
 
     public class TipoPrestamo
@@ -173,6 +189,8 @@ namespace BancaCore.Models
         public decimal TasaInteres { get; set; }
         public int PlazoMaximoMeses { get; set; }
         public bool Estado { get; set; } = true;
+        // Tasa desde función dbo.fn_TasaTipoPrestamo
+        public decimal TasaDesdeFuncion { get; set; }
     }
 
     public class Prestamo
@@ -207,6 +225,11 @@ namespace BancaCore.Models
         public string NombreTipoPrestamo { get; set; } = "";
         public string NombreMoneda { get; set; } = "";
         public string SimboloMoneda { get; set; } = "";
+        public string NombreSucursal { get; set; } = "";
+        // Campos calculados por funciones de BD
+        public decimal CuotaPrestamo { get; set; }
+        public decimal TasaDesdeFuncion { get; set; }
+        public string NombreSucursalFunc { get; set; } = "";
     }
 
     public class TipoTransaccion
