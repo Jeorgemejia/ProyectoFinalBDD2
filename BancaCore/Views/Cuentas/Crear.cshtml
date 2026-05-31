@@ -11,7 +11,7 @@
     <div class="card-body p-4">
         <form asp-action="Crear" method="post">
             @Html.AntiForgeryToken()
-            <div asp-validation-summary="ModelOnly" class="alert alert-danger d-none"></div>
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
 
             <div class="row g-3">
                 <div class="col-md-6">
@@ -41,7 +41,7 @@
             </div>
 
             <div class="mt-4 d-flex gap-2">
-                <button type="submit" class="btn btn-banca"><i class="bi bi-check-lg me-1"></i>Abrir cuenta</button>
+                <button type="submit" class="btn btn-banca d-inline-flex align-items-center"><i class="bi bi-check-lg me-1"></i>Abrir cuenta</button>
                 <a asp-action="Index" class="btn btn-outline-secondary">Cancelar</a>
             </div>
         </form>

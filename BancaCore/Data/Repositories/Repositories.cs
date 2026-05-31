@@ -780,29 +780,59 @@ namespace BancaCore.Data.Repositories
                 SelectBase + " WHERE c.CodigoCliente=@clienteId AND c.Estado=1", new { clienteId });
         }
 
-        public async Task<int> CreateAsync(CuentaBancaria c, string usuario)
+        // Cambiado: firma y cuerpo de CreateAsync en CuentaRepository
+        public async Task<(int CodigoCuenta, string Mensaje)> CreateAsync(CuentaBancaria c, string usuario)
         {
             using var conn = _db.Open();
+            // Abrir la conexión antes de usar SqlCommand
+            await conn.OpenAsync();
 
-            // Generar número de cuenta como antes
-            var seq = await conn.ExecuteScalarAsync<int>(
-                "SELECT ISNULL(MAX(CodigoCuenta),0)+1 FROM tbl_CuentaBancaria");
+            // Generar número de cuenta
+            var seq = await conn.ExecuteScalarAsync<int>("SELECT ISNULL(MAX(CodigoCuenta),0)+1 FROM tbl_CuentaBancaria");
             c.NumeroCuenta = $"{c.CodigoSucursal:D3}-{c.CodigoTipoCuenta:D2}-{seq:D8}";
 
-            var p = new DynamicParameters();
-            p.Add("NumeroCuenta", c.NumeroCuenta);
-            p.Add("CodigoCliente", c.CodigoCliente);
-            p.Add("CodigoSucursal", c.CodigoSucursal);
-            p.Add("CodigoTipoCuenta", c.CodigoTipoCuenta);
-            p.Add("CodigoMoneda", c.CodigoMoneda);
-            p.Add("SaldoActual", c.SaldoActual);
-            p.Add("FechaApertura", c.FechaApertura.Date);
-            p.Add("UsuarioCreacion", usuario);
-            p.Add("CodigoCuentaOutput", dbType: DbType.Int32, direction: ParameterDirection.Output);
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = "usp_AgregarCuentaBancaria";
+            cmd.CommandType = CommandType.StoredProcedure;
 
-            await conn.ExecuteAsync("usp_AgregarCuentaBancaria", p, commandType: CommandType.StoredProcedure);
+            cmd.Parameters.Add(new Microsoft.Data.SqlClient.SqlParameter("@NumeroCuenta", System.Data.SqlDbType.VarChar, 20) { Value = c.NumeroCuenta });
+            cmd.Parameters.Add(new Microsoft.Data.SqlClient.SqlParameter("@CodigoCliente", System.Data.SqlDbType.Int) { Value = c.CodigoCliente });
+            cmd.Parameters.Add(new Microsoft.Data.SqlClient.SqlParameter("@CodigoSucursal", System.Data.SqlDbType.Int) { Value = c.CodigoSucursal });
+            cmd.Parameters.Add(new Microsoft.Data.SqlClient.SqlParameter("@CodigoTipoCuenta", System.Data.SqlDbType.Int) { Value = c.CodigoTipoCuenta });
+            cmd.Parameters.Add(new Microsoft.Data.SqlClient.SqlParameter("@CodigoMoneda", System.Data.SqlDbType.Int) { Value = c.CodigoMoneda });
+            var pSaldo = new Microsoft.Data.SqlClient.SqlParameter("@SaldoActual", System.Data.SqlDbType.Decimal) { Precision = 18, Scale = 2 };
+            pSaldo.Value = c.SaldoActual;
+            cmd.Parameters.Add(pSaldo);
+            cmd.Parameters.Add(new Microsoft.Data.SqlClient.SqlParameter("@FechaApertura", System.Data.SqlDbType.Date) { Value = c.FechaApertura.Date });
+            cmd.Parameters.Add(new Microsoft.Data.SqlClient.SqlParameter("@UsuarioCreacion", System.Data.SqlDbType.VarChar, 50) { Value = (object)usuario ?? DBNull.Value });
 
-            return p.Get<int>("CodigoCuentaOutput");
+            var pResultado = new Microsoft.Data.SqlClient.SqlParameter("@Resultado", System.Data.SqlDbType.Bit) { Direction = ParameterDirection.Output };
+            var pMensaje = new Microsoft.Data.SqlClient.SqlParameter("@Mensaje", System.Data.SqlDbType.NVarChar, 500) { Direction = ParameterDirection.Output };
+
+            cmd.Parameters.Add(pResultado);
+            cmd.Parameters.Add(pMensaje);
+
+            try
+            {
+                await cmd.ExecuteNonQueryAsync();
+
+                var resultado = (pResultado.Value == DBNull.Value) ? false : Convert.ToBoolean(pResultado.Value);
+                var mensaje = (pMensaje.Value == DBNull.Value) ? string.Empty : pMensaje.Value.ToString()!;
+
+                if (!resultado)
+                    return (0, mensaje);
+
+                // Obtener el id creado consultando por NumeroCuenta (requiere conexión abierta, ya lo está)
+                var nuevoId = await conn.ExecuteScalarAsync<int?>(@"SELECT CodigoCuenta FROM tbl_CuentaBancaria WHERE NumeroCuenta=@NumeroCuenta",
+                    new { NumeroCuenta = c.NumeroCuenta });
+
+                return (nuevoId ?? 0, mensaje);
+            }
+            catch (Microsoft.Data.SqlClient.SqlException ex)
+            {
+                // Devolver mensaje de error para mostrar en UI
+                return (0, ex.Message);
+            }
         }
 
         // Update mediante stored procedure que devuelve Resultado y Mensaje

@@ -12,6 +12,13 @@
         <form asp-action="Editar" method="post">
             @Html.AntiForgeryToken()
             <input type="hidden" asp-for="CodigoCuenta" />
+            @* Enviar campos que el modelo requiere pero que no se muestran en el formulario *@
+            <input type="hidden" asp-for="NumeroCuenta" />
+            <input type="hidden" asp-for="SaldoActual" />
+            <input type="hidden" asp-for="FechaApertura" />
+            <input type="hidden" asp-for="Estado" />
+
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
 
             <div class="row g-3">
                 <div class="col-md-6">

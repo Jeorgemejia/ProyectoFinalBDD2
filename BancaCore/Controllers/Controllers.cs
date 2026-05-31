@@ -867,7 +867,11 @@ namespace BancaCore.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Editar(CuentaBancaria model)
         {
-            if (!ModelState.IsValid) { await CargarSelectLists(); return View(model); }
+            if (!ModelState.IsValid)
+            {
+                await CargarSelectLists();
+                return View(model);
+            }
 
             var (resultado, mensaje) = await _repo.UpdateAsync(model, User.Identity!.Name!);
 
@@ -900,21 +904,22 @@ namespace BancaCore.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Crear(CuentaBancaria model)
         {
-            if (!ModelState.IsValid) 
-            { 
-                await CargarSelectLists(); 
-                return View(model); 
+            if (!ModelState.IsValid)
+            {
+                await CargarSelectLists();
+                return View(model);
             }
             
-            var resultado = await _repo.CreateAsync(model, User.Identity!.Name!);
-            if (resultado > 0)
+            var (codigoCuenta, mensaje) = await _repo.CreateAsync(model, User.Identity!.Name!);
+
+            if (codigoCuenta > 0)
             {
-                TempData["OK"] = "Cuenta bancaria agregada correctamente BDD";
+                TempData["OK"] = mensaje; // mensaje proveniente del SP en caso de éxito
                 return RedirectToAction(nameof(Index));
             }
             else
             {
-                TempData["Error"] = "No se pudo crear la cuenta bancaria.";
+                TempData["ERR"] = mensaje; // mensaje de error desde el SP
                 await CargarSelectLists();
                 return View(model);
             }
