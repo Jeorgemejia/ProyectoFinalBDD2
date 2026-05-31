@@ -763,7 +763,7 @@ namespace BancaCore.Data.Repositories
         {
             using var conn = _db.Open();
             return await conn.QueryAsync<CuentaBancaria>(
-                SelectBase + " WHERE c.Estado=1 ORDER BY c.FechaApertura DESC");
+                "usp_ConsultarCuentaBancaria", commandType: CommandType.StoredProcedure);
         }
 
         public async Task<CuentaBancaria?> GetByIdAsync(int id)
