@@ -95,37 +95,24 @@ namespace BancaCore.Models
     public class CuentaBancaria
     {
         public int CodigoCuenta { get; set; }
-
-        [Required] [Display(Name = "Número de Cuenta")]
         public string NumeroCuenta { get; set; } = "";
-
-        [Display(Name = "Cliente")]
         public int CodigoCliente { get; set; }
-
-        [Display(Name = "Sucursal")]
         public int CodigoSucursal { get; set; }
-
-        [Display(Name = "Tipo de Cuenta")]
         public int CodigoTipoCuenta { get; set; }
-
-        [Display(Name = "Moneda")]
         public int CodigoMoneda { get; set; }
-
-        [Display(Name = "Saldo Actual")]
         public decimal SaldoActual { get; set; }
-
-        [DataType(DataType.Date)] [Display(Name = "Fecha Apertura")]
         public DateTime FechaApertura { get; set; }
-
         public bool Estado { get; set; } = true;
         public string? UsuarioCreacion { get; set; }
         public DateTime? FechaCreacion { get; set; }
 
-        // Navegación (join)
-        public string NombreCliente { get; set; } = "";
-        public string NombreSucursal { get; set; } = "";
-        public string NombreTipoCuenta { get; set; } = "";
-        public string SimboloMoneda { get; set; } = "";
+        // Propiedades añadidas para mapear eliminación/edición desde SP
+        public string? UsuarioModificacion { get; set; }
+        public DateTime? FechaModificacion { get; set; }
+        public string? UsuarioEliminacion { get; set; }
+        public DateTime? FechaEliminacion { get; set; }
+
+        // propiedades de navegación...
     }
 
     public class TipoTarjeta
@@ -283,5 +270,109 @@ namespace BancaCore.Models
         public DateTime FechaHora { get; set; }
         public string? ValoresAnteriores { get; set; }
         public string? ValoresNuevos { get; set; }
+    }
+}
+
+public async Task<(bool Resultado, string Mensaje)> CreateAsync(CuentaBancaria c, string usuario)
+{
+    using var conn = _db.Open();
+    var seq = await conn.ExecuteScalarAsync<int>("SELECT ISNULL(MAX(CodigoCuenta),0)+1 FROM tbl_CuentaBancaria");
+    c.NumeroCuenta = $"{c.CodigoSucursal:D3}-{c.CodigoTipoCuenta:D2}-{seq:D8}";
+
+    var p = new DynamicParameters();
+    p.Add("NumeroCuenta", c.NumeroCuenta);
+    p.Add("CodigoCliente", c.CodigoCliente);
+    p.Add("CodigoSucursal", c.CodigoSucursal);
+    p.Add("CodigoTipoCuenta", c.CodigoTipoCuenta);
+    p.Add("CodigoMoneda", c.CodigoMoneda);
+    p.Add("SaldoActual", c.SaldoActual);
+    p.Add("FechaApertura", c.FechaApertura);
+    p.Add("UsuarioCreacion", usuario);
+    p.Add("Resultado", dbType: DbType.Boolean, direction: ParameterDirection.Output);
+    p.Add("Mensaje", dbType: DbType.String, size: 500, direction: ParameterDirection.Output);
+
+    await conn.ExecuteAsync("usp_AgregarCuentaBancaria", p, commandType: CommandType.StoredProcedure);
+    return (p.Get<bool>("Resultado"), p.Get<string>("Mensaje") ?? string.Empty);
+}
+
+using System.Data;
+using Dapper;
+using BancaCore.Data;
+using BancaCore.Models;
+
+namespace BancaCore.Data.Repositories
+{
+    public class TipoCuentaRepository
+    {
+        private readonly DbContext _db;
+        public TipoCuentaRepository(DbContext db) { _db = db; }
+
+        public async Task<IEnumerable<TipoCuenta>> GetAllAsync()
+        {
+            using var conn = _db.Open();
+            return await conn.QueryAsync<TipoCuenta>("usp_ConsultarTipoCuenta", commandType: CommandType.StoredProcedure);
+        }
+
+        public async Task<TipoCuenta?> GetByIdAsync(int id)
+        {
+            using var conn = _db.Open();
+            return await conn.QueryFirstOrDefaultAsync<TipoCuenta>("SELECT * FROM tbl_TipoCuenta WHERE CodigoTipoCuenta=@id", new { id });
+        }
+
+        public async Task<IEnumerable<TipoCuenta>> SearchAsync(string nombre)
+        {
+            using var conn = _db.Open();
+            var p = new DynamicParameters();
+            p.Add("Nombre", nombre);
+            return await conn.QueryAsync<TipoCuenta>("usp_BuscarTipoCuenta", p, commandType: CommandType.StoredProcedure);
+        }
+
+        public async Task<(bool Resultado, string Mensaje)> CreateAsync(TipoCuenta t, string usuario)
+        {
+            using var conn = _db.Open();
+            var p = new DynamicParameters();
+            p.Add("Nombre", t.Nombre);
+            p.Add("SaldoMinimo", t.SaldoMinimo);
+            p.Add("TasaInteres", t.TasaInteres);
+            p.Add("UsuarioCreacion", usuario);
+            p.Add("Resultado", dbType: DbType.Boolean, direction: ParameterDirection.Output);
+            p.Add("Mensaje", dbType: DbType.String, size: 500, direction: ParameterDirection.Output);
+
+            await conn.ExecuteAsync("usp_AgregarTipoCuenta", p, commandType: CommandType.StoredProcedure);
+
+            return (p.Get<bool>("Resultado"), p.Get<string>("Mensaje") ?? string.Empty);
+        }
+
+        public async Task<(bool Resultado, string Mensaje)> UpdateAsync(TipoCuenta t, string usuario)
+        {
+            using var conn = _db.Open();
+            var p = new DynamicParameters();
+            p.Add("CodigoTipoCuenta", t.CodigoTipoCuenta);
+            p.Add("Nombre", t.Nombre);
+            p.Add("SaldoMinimo", t.SaldoMinimo);
+            p.Add("TasaInteres", t.TasaInteres);
+            p.Add("Estado", t.Estado);
+            p.Add("UsuarioModificacion", usuario);
+            p.Add("Resultado", dbType: DbType.Boolean, direction: ParameterDirection.Output);
+            p.Add("Mensaje", dbType: DbType.String, size: 500, direction: ParameterDirection.Output);
+
+            await conn.ExecuteAsync("usp_EditarTipoCuenta", p, commandType: CommandType.StoredProcedure);
+
+            return (p.Get<bool>("Resultado"), p.Get<string>("Mensaje") ?? string.Empty);
+        }
+
+        public async Task<(bool Resultado, string Mensaje)> DeleteAsync(int id, string usuario)
+        {
+            using var conn = _db.Open();
+            var p = new DynamicParameters();
+            p.Add("CodigoTipoCuenta", id);
+            p.Add("UsuarioEliminacion", usuario);
+            p.Add("Resultado", dbType: DbType.Boolean, direction: ParameterDirection.Output);
+            p.Add("Mensaje", dbType: DbType.String, size: 500, direction: ParameterDirection.Output);
+
+            await conn.ExecuteAsync("usp_EliminarTipoCuenta", p, commandType: CommandType.StoredProcedure);
+
+            return (p.Get<bool>("Resultado"), p.Get<string>("Mensaje") ?? string.Empty);
+        }
     }
 }

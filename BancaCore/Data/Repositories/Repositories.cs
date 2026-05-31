@@ -184,7 +184,8 @@ namespace BancaCore.Controllers
         public async Task<IEnumerable<CuentaBancaria>> GetAllAsync()
         {
             using var conn = _db.Open();
-            return await conn.QueryAsync<CuentaBancaria>("usp_ConsultarCuentaBancaria", commandType: CommandType.StoredProcedure);
+            return await conn.QueryAsync<CuentaBancaria>("usp_ConsultarCuentaBancaria",
+                commandType: CommandType.StoredProcedure);
         }
 
         public async Task<CuentaBancaria?> GetByIdAsync(int id)
